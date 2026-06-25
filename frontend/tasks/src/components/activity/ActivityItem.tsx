@@ -27,6 +27,12 @@ function describeActivity(activity: TaskActivity): string {
       return 'edited a comment';
     case 'COMMENT_DELETED':
       return 'deleted a comment';
+    case 'TIMER_PAUSED':
+      return `paused timer on ${activity.task.title}`;
+    case 'TIMER_RESUMED':
+      return `resumed timer on ${activity.task.title}`;
+    case 'TIMER_STOPPED':
+      return `stopped timer on ${activity.task.title}`;
     default:
       return 'made a change';
   }

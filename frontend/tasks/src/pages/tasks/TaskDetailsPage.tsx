@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  createManualTimeEntry,
   createTaskComment,
   deleteTaskAttachment,
   deleteTaskComment,
+  fetchActiveTimer,
   fetchClients,
   fetchLabels,
   fetchTask,
@@ -12,6 +14,10 @@ import {
   fetchTaskComments,
   fetchUsers,
   fetchCurrentUser,
+  pauseTimer,
+  resumeTimer,
+  startTimer,
+  stopTimer,
   updateTask,
   updateTaskComment,
 } from '../../lib/api';
@@ -22,8 +28,13 @@ import { CommentList } from '../../components/comments/CommentList';
 import { ActivityTimeline } from '../../components/activity/ActivityTimeline';
 import { EditTaskModal } from '../../modals/EditTaskModal';
 import { TaskPriorityBadge, TaskStatusBadge } from '../../components/tasks/TaskStatusBadge';
+import { TaskFieldPopover } from '../../components/tasks/TaskFieldPopover';
+import { TaskDetailsTimeEntryCard } from '../../components/timer/TaskDetailsTimeEntryCard';
+import { TimerSavedModal } from '../../components/timer/TimerSavedModal';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import type {
   Client,
+  ManualEntryPayload,
   SafeUser,
   TaskActivity,
   TaskAttachment,
@@ -31,6 +42,7 @@ import type {
   TaskFormValues,
   TaskLabel,
   TaskRecord,
+  TimeEntry,
 } from '../../types';
 
 export function TaskDetailsPage() {
@@ -59,6 +71,13 @@ export function TaskDetailsPage() {
   const [activity, setActivity] = useState<TaskActivity[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
+  const [savedTimer, setSavedTimer] = useState<TimeEntry | null>(null);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [pendingDeleteAttachment, setPendingDeleteAttachment] = useState<TaskAttachment | null>(null);
+  const [pendingDeleteComment, setPendingDeleteComment] = useState<TaskComment | null>(null);
+  const [openFieldEditor, setOpenFieldEditor] = useState<{ field: 'status' | 'priority' } | null>(null);
+  const fieldTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!taskId) {
@@ -86,6 +105,24 @@ export function TaskDetailsPage() {
   }, [navigate, setTask, taskId]);
 
   useEffect(() => {
+    void fetchActiveTimer()
+      .then(setActiveTimer)
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void fetchActiveTimer()
+        .then(setActiveTimer)
+        .catch(() => undefined);
+    }, 5000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!taskId) {
       return;
     }
@@ -109,6 +146,13 @@ export function TaskDetailsPage() {
     void fetchTaskActivity(taskId).then(setActivity).catch(() => undefined);
   }, [activityRefreshKey, taskId]);
 
+  useEffect(() => {
+    if (isEditing) {
+      setOpenFieldEditor(null);
+      fieldTriggerRef.current = null;
+    }
+  }, [isEditing]);
+
   if (!task || !currentUser) {
     return <section className="route-main"><div className="empty-state">{feedback || 'Loading task details...'}</div></section>;
   }
@@ -126,6 +170,87 @@ export function TaskDetailsPage() {
     setComments(nextComments);
     setActivity(nextActivity);
   };
+
+  const updateTaskField = async (field: 'status' | 'priority', value: string) => {
+    if (!task) {
+      return;
+    }
+
+    const updated = await updateTask(task.id, field === 'status' ? { status: value as TaskRecord['status'] } : { priority: value as TaskRecord['priority'] });
+    setTask(updated);
+    touchActivity();
+    await refreshAll();
+  };
+
+  const runTaskTimer = async (payload: { clientId: number; taskId: number; description?: string }) => {
+    const entry = await startTimer(payload);
+    setActiveTimer(entry);
+    setFeedback('');
+  };
+
+  const pauseActiveTimer = async () => {
+    const entry = await pauseTimer();
+    setActiveTimer(entry);
+    setFeedback('');
+  };
+
+  const resumeActiveTimer = async () => {
+    const entry = await resumeTimer();
+    setActiveTimer(entry);
+    setFeedback('');
+  };
+
+  const stopActiveTimer = async (payload?: { description?: string }) => {
+    const entry = await stopTimer(payload);
+    setActiveTimer(null);
+    setSavedTimer(entry);
+    setIsSavedModalOpen(true);
+    setFeedback('');
+  };
+
+  const saveManualEntry = async (payload: ManualEntryPayload) => {
+    const entry = await createManualTimeEntry(payload);
+    const nextActiveTimer = await fetchActiveTimer().catch(() => activeTimer);
+    setActiveTimer(nextActiveTimer);
+    setSavedTimer(entry);
+    setIsSavedModalOpen(true);
+    setFeedback('');
+  };
+
+  const confirmDeleteAttachment = async () => {
+    if (!pendingDeleteAttachment) {
+      return;
+    }
+
+    try {
+      await deleteTaskAttachment(task.id, pendingDeleteAttachment.id);
+      setPendingDeleteAttachment(null);
+      touchAttachments();
+      touchActivity();
+      await refreshAll();
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to delete attachment');
+    }
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!pendingDeleteComment) {
+      return;
+    }
+
+    try {
+      await deleteTaskComment(pendingDeleteComment.id);
+      setPendingDeleteComment(null);
+      touchComments();
+      touchActivity();
+      await refreshAll();
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to delete comment');
+    }
+  };
+
+  const activeConfirmTarget = pendingDeleteAttachment ? 'attachment' : pendingDeleteComment ? 'comment' : null;
+  const hasCommentReplies = Boolean(pendingDeleteComment?.replies && pendingDeleteComment.replies.length > 0);
 
   return (
     <section className="route-main tasks-page">
@@ -160,88 +285,126 @@ export function TaskDetailsPage() {
         <article className="stat-card stat-card-purple">
           <div className="stat-card-head">Priority</div>
           <div className="stat-card-body">
-            <strong><TaskPriorityBadge priority={task.priority} /></strong>
+            <strong>
+              <TaskPriorityBadge
+                priority={task.priority}
+                onClick={(event) => {
+                  setOpenFieldEditor((current) => (current?.field === 'priority' ? null : { field: 'priority' }));
+                  fieldTriggerRef.current = event.currentTarget;
+                }}
+                isActive={openFieldEditor?.field === 'priority'}
+                ariaLabel={`Update priority for ${task.title}`}
+              />
+            </strong>
             <span>Current urgency</span>
           </div>
         </article>
         <article className="stat-card stat-card-orange">
           <div className="stat-card-head">Status</div>
           <div className="stat-card-body">
-            <strong><TaskStatusBadge status={task.status} /></strong>
+            <strong>
+              <TaskStatusBadge
+                status={task.status}
+                onClick={(event) => {
+                  setOpenFieldEditor((current) => (current?.field === 'status' ? null : { field: 'status' }));
+                  fieldTriggerRef.current = event.currentTarget;
+                }}
+                isActive={openFieldEditor?.field === 'status'}
+                ariaLabel={`Update status for ${task.title}`}
+              />
+            </strong>
             <span>Delivery stage</span>
           </div>
         </article>
       </section>
 
-      <section className="card-panel task-detail-panel">
-        <div className="task-detail-tabs" role="tablist" aria-label="Task detail tabs">
-          <button type="button" className={activeTab === 'details' ? 'active' : ''} onClick={() => setActiveTab('details')}>Details</button>
-          <button type="button" className={activeTab === 'comments' ? 'active' : ''} onClick={() => setActiveTab('comments')}>Comments</button>
-          <button type="button" className={activeTab === 'activity' ? 'active' : ''} onClick={() => setActiveTab('activity')}>Activity Log</button>
-        </div>
-        {feedback ? <div className="feedback task-detail-feedback" data-tone="error">{feedback}</div> : null}
+      <section className="task-detail-layout">
+        <TaskDetailsTimeEntryCard
+          task={task}
+          activeTimer={activeTimer}
+          onStartTimer={runTaskTimer}
+          onPauseTimer={pauseActiveTimer}
+          onResumeTimer={resumeActiveTimer}
+          onStopTimer={stopActiveTimer}
+          onCreateManualEntry={saveManualEntry}
+        />
 
-        {activeTab === 'details' ? (
-          <TaskDetailsTab
-            task={task}
-            attachments={attachments}
-            clients={clients}
-            users={users}
-            labels={labels}
-            onDeleteAttachment={(attachment) => {
-              void deleteTaskAttachment(task.id, attachment.id)
-                .then(async () => {
-                  touchAttachments();
+        <section className="card-panel task-detail-panel">
+          <div className="task-detail-tabs" role="tablist" aria-label="Task detail tabs">
+            <button type="button" className={activeTab === 'details' ? 'active' : ''} onClick={() => setActiveTab('details')}>Details</button>
+            <button type="button" className={activeTab === 'comments' ? 'active' : ''} onClick={() => setActiveTab('comments')}>Comments</button>
+            <button type="button" className={activeTab === 'activity' ? 'active' : ''} onClick={() => setActiveTab('activity')}>Activity Log</button>
+          </div>
+          {feedback ? <div className="feedback task-detail-feedback" data-tone="error">{feedback}</div> : null}
+
+          {activeTab === 'details' ? (
+            <TaskDetailsTab
+              task={task}
+              attachments={attachments}
+              clients={clients}
+              users={users}
+              labels={labels}
+              onDeleteAttachment={(attachment) => {
+                setPendingDeleteComment(null);
+                setPendingDeleteAttachment(attachment);
+              }}
+            />
+          ) : null}
+
+          {activeTab === 'comments' ? (
+            <div className="comments-panel">
+              <CommentEditor
+                users={users}
+                onSubmit={async (content) => {
+                  await createTaskComment(task.id, { content });
+                  touchComments();
                   touchActivity();
                   await refreshAll();
-                })
-                .catch((error: unknown) => {
-                  setFeedback(error instanceof Error ? error.message : 'Unable to delete attachment');
-                });
-            }}
-          />
-        ) : null}
+                }}
+              />
 
-        {activeTab === 'comments' ? (
-          <div className="comments-panel">
-            <CommentEditor
-              users={users}
-              onSubmit={async (content) => {
-                await createTaskComment(task.id, { content });
-                touchComments();
-                touchActivity();
-                await refreshAll();
-              }}
-            />
+              <CommentList
+                comments={comments}
+                currentUser={currentUser}
+                users={users}
+                onReply={async (comment, content) => {
+                  await createTaskComment(task.id, { content, parentId: comment.id });
+                  touchComments();
+                  touchActivity();
+                  await refreshAll();
+                }}
+                onUpdate={async (comment, content) => {
+                  await updateTaskComment(comment.id, { content });
+                  touchComments();
+                  touchActivity();
+                  await refreshAll();
+                }}
+                onDelete={async (comment) => {
+                  setPendingDeleteAttachment(null);
+                  setPendingDeleteComment(comment);
+                }}
+              />
+            </div>
+          ) : null}
 
-            <CommentList
-              comments={comments}
-              currentUser={currentUser}
-              users={users}
-              onReply={async (comment, content) => {
-                await createTaskComment(task.id, { content, parentId: comment.id });
-                touchComments();
-                touchActivity();
-                await refreshAll();
-              }}
-              onUpdate={async (comment, content) => {
-                await updateTaskComment(comment.id, { content });
-                touchComments();
-                touchActivity();
-                await refreshAll();
-              }}
-              onDelete={async (comment) => {
-                await deleteTaskComment(comment.id);
-                touchComments();
-                touchActivity();
-                await refreshAll();
-              }}
-            />
-          </div>
-        ) : null}
-
-        {activeTab === 'activity' ? <ActivityTimeline activity={activity} /> : null}
+          {activeTab === 'activity' ? <ActivityTimeline activity={activity} /> : null}
+        </section>
       </section>
+
+      {task && openFieldEditor ? (
+        <TaskFieldPopover
+          open={Boolean(openFieldEditor)}
+          field={openFieldEditor.field}
+          taskTitle={task.title}
+          value={openFieldEditor.field === 'priority' ? task.priority : task.status}
+          anchorRef={fieldTriggerRef}
+          onClose={() => setOpenFieldEditor(null)}
+          onSave={async (nextValue) => {
+            await updateTaskField(openFieldEditor.field, nextValue);
+            setOpenFieldEditor(null);
+          }}
+        />
+      ) : null}
 
       {isEditing ? (
         <EditTaskModal
@@ -259,6 +422,45 @@ export function TaskDetailsPage() {
           }}
         />
       ) : null}
+
+      <TimerSavedModal
+        open={isSavedModalOpen}
+        entry={savedTimer}
+        onClose={() => setIsSavedModalOpen(false)}
+        onViewTimesheet={() => {
+          setIsSavedModalOpen(false);
+          navigate('/timesheets');
+        }}
+      />
+
+      <ConfirmModal
+        open={Boolean(activeConfirmTarget)}
+        title={activeConfirmTarget === 'attachment' ? 'Delete attachment?' : 'Delete comment?'}
+        message={
+          activeConfirmTarget === 'attachment'
+            ? <>Delete &quot;{pendingDeleteAttachment?.originalName}&quot;? This action cannot be undone.</>
+            : hasCommentReplies
+              ? <>Delete this comment? Its replies will also be removed. This action cannot be undone.</>
+              : <>Delete this comment? This action cannot be undone.</>
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        titleId="task-detail-delete-confirm-title"
+        messageId="task-detail-delete-confirm-message"
+        onClose={() => {
+          setPendingDeleteAttachment(null);
+          setPendingDeleteComment(null);
+        }}
+        onConfirm={() => {
+          if (activeConfirmTarget === 'attachment') {
+            void confirmDeleteAttachment();
+            return;
+          }
+
+          void confirmDeleteComment();
+        }}
+      />
     </section>
   );
 }

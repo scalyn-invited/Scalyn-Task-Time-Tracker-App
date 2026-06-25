@@ -5,7 +5,7 @@
   "description": "Scalyn Task Time Tracker backend built with NestJS, Prisma, MySQL, and JWT auth.",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "npm run build:timer && npm run build:tasks && nest build",
+    "build": "npm run build:timer && npm run build:tasks && tsc -p tsconfig.build.json",
     "build:timer": "vite build --config frontend/timer/vite.config.ts",
     "build:tasks": "vite build --config frontend/tasks/vite.config.ts",
     "dev:timer": "vite --config frontend/timer/vite.config.ts",
@@ -26,6 +26,7 @@
     "seed": "npm run prisma:seed"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.10",
     "@hookform/resolvers": "^5.4.0",
     "@nestjs/common": "^10.4.8",
     "@nestjs/config": "^3.2.3",

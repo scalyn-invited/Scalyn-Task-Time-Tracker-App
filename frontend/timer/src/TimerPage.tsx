@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { clearToken, getToken, request } from './lib/api';
 import { getInitials } from './lib/format';
 import { ActiveTimerCard } from './components/timer/ActiveTimerCard';
-import { StartTimerButton } from './components/timer/StartTimerButton';
-import { StopTimerButton } from './components/timer/StopTimerButton';
 import { ManualTimeEntryModal } from './modals/ManualTimeEntryModal';
+import { TimerSavedModal } from './components/timer/TimerSavedModal';
 import { useTimerStore } from './store/timer.store';
-import { ClientOption, ManualEntryPayload, Profile, TaskOption } from './types';
+import { ClientOption, ManualEntryPayload, Profile, TaskOption, TimeEntry } from './types';
 
 export function TimerPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -16,6 +15,7 @@ export function TimerPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [description, setDescription] = useState('');
   const [manualOpen, setManualOpen] = useState(false);
+  const [savedTimer, setSavedTimer] = useState<TimeEntry | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
 
   const activeTimer = useTimerStore((state) => state.activeTimer);
@@ -24,6 +24,8 @@ export function TimerPage() {
   const error = useTimerStore((state) => state.error);
   const refreshActiveTimer = useTimerStore((state) => state.refreshActiveTimer);
   const startTimer = useTimerStore((state) => state.startTimer);
+  const pauseTimer = useTimerStore((state) => state.pauseTimer);
+  const resumeTimer = useTimerStore((state) => state.resumeTimer);
   const stopTimer = useTimerStore((state) => state.stopTimer);
   const submitManualEntry = useTimerStore((state) => state.submitManualEntry);
   const clearError = useTimerStore((state) => state.clearError);
@@ -149,6 +151,11 @@ export function TimerPage() {
   }
 
   async function handleStartTimer() {
+    if (activeTimer) {
+      setPageError('Pause or stop the current timer before starting a new one.');
+      return;
+    }
+
     if (selectedClientId === null || selectedTaskId === null) {
       setPageError('Please select both a client and a task.');
       return;
@@ -164,24 +171,36 @@ export function TimerPage() {
     });
   }
 
+  async function handlePauseTimer() {
+    setPageError(null);
+    clearError();
+    await pauseTimer();
+  }
+
+  async function handleResumeTimer() {
+    setPageError(null);
+    clearError();
+    await resumeTimer();
+  }
+
   async function handleStopTimer() {
     setPageError(null);
     clearError();
 
-    await stopTimer();
+    const stoppedTimer = await stopTimer();
+    setSavedTimer(stoppedTimer);
   }
 
   async function handleManualSubmit(payload: ManualEntryPayload) {
     setPageError(null);
     clearError();
 
-    await submitManualEntry(payload);
+    const entry = await submitManualEntry(payload);
+    setSavedTimer(entry);
   }
 
   const selectedClient = activeClients.find((client) => client.id === selectedClientId) ?? null;
   const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
-  const canStart = selectedClientId !== null && selectedTaskId !== null && !isSaving;
-
   return (
     <main className="app-shell dashboard-shell timer-shell">
       <aside className="sidebar">
@@ -290,7 +309,6 @@ export function TimerPage() {
         <header className="topbar dashboard-topbar">
           <h1>Timer</h1>
           <div className="topbar-actions">
-            <StartTimerButton onClick={handleStartTimer} disabled={!canStart} loading={isSaving} />
             <button className="team-switcher" type="button" onClick={() => setManualOpen(true)}>
               <span>Manual entry</span>
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -301,7 +319,14 @@ export function TimerPage() {
         </header>
 
         <div className="dashboard-content timer-content">
-          <ActiveTimerCard entry={activeTimer} onStop={handleStopTimer} loading={isSaving} />
+          <ActiveTimerCard
+            entry={activeTimer}
+            onStart={handleStartTimer}
+            onPause={handlePauseTimer}
+            onResume={handleResumeTimer}
+            onStop={handleStopTimer}
+            loading={isSaving}
+          />
 
           <section className="content-grid timer-controls-grid">
             <article className="card-panel timer-panel">
@@ -367,7 +392,7 @@ export function TimerPage() {
                 </div>
                 <div>
                   <span>Duration</span>
-                  <strong>{activeTimer ? 'Tracking live' : '00:00:00'}</strong>
+                  <strong>{activeTimer ? (activeTimer.status === 'paused' ? 'Paused' : 'Tracking live') : '00:00:00'}</strong>
                 </div>
               </div>
             </article>
@@ -376,7 +401,7 @@ export function TimerPage() {
               <div className="section-header">
                 <h2>Session State</h2>
                 <span className="status-pill status-pill-muted">
-                  {isLoading ? 'Syncing' : activeTimer ? 'Running' : 'Ready'}
+                  {isLoading ? 'Syncing' : activeTimer ? (activeTimer.status === 'paused' ? 'Paused' : 'Running') : 'Ready'}
                 </span>
               </div>
 
@@ -391,7 +416,7 @@ export function TimerPage() {
                 </div>
                 <div className="route-item">
                   <strong>Duration</strong>
-                  <span>{activeTimer ? 'Updated every second' : 'No active session'}</span>
+                  <span>{activeTimer ? (activeTimer.status === 'paused' ? 'Countdown is frozen' : 'Updated every second') : 'No active session'}</span>
                 </div>
               </div>
 
@@ -399,11 +424,13 @@ export function TimerPage() {
                 <button className="ghost-action" type="button" onClick={() => setManualOpen(true)}>
                   Manual Entry
                 </button>
-                {activeTimer ? (
-                  <StopTimerButton onClick={handleStopTimer} disabled={!activeTimer || isSaving} loading={isSaving} />
-                ) : (
-                  <StartTimerButton onClick={handleStartTimer} disabled={!canStart} loading={isSaving} />
-                )}
+                <span className="timer-side-hint">
+                  {activeTimer
+                    ? activeTimer.status === 'paused'
+                      ? 'Resume or stop the paused timer.'
+                      : 'Pause or stop the running timer.'
+                    : 'Select a client and task to begin.'}
+                </span>
               </div>
             </article>
           </section>
@@ -425,6 +452,15 @@ export function TimerPage() {
         onClose={() => setManualOpen(false)}
         onSubmit={handleManualSubmit}
         loading={isSaving}
+      />
+
+      <TimerSavedModal
+        open={savedTimer !== null}
+        entry={savedTimer}
+        onClose={() => setSavedTimer(null)}
+        onViewTimesheet={() => {
+          window.location.assign('/timesheets');
+        }}
       />
     </main>
   );

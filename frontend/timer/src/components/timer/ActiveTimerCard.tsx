@@ -1,28 +1,46 @@
 import { TimerDisplay } from './TimerDisplay';
+import { StartTimerButton } from './StartTimerButton';
 import { TimeEntry } from '../../types';
 import { formatDateTime } from '../../lib/format';
 
 interface ActiveTimerCardProps {
   entry: TimeEntry | null;
+  onStart: () => void;
+  onPause: () => void;
+  onResume: () => void;
   onStop: () => void;
   loading?: boolean;
 }
 
-export function ActiveTimerCard({ entry, onStop, loading = false }: ActiveTimerCardProps) {
+export function ActiveTimerCard({
+  entry,
+  onStart,
+  onPause,
+  onResume,
+  onStop,
+  loading = false,
+}: ActiveTimerCardProps) {
+  const timerStatus = entry?.status ?? 'completed';
+  const isRunning = timerStatus === 'running';
+  const isPaused = timerStatus === 'paused';
+
   return (
     <section className="active-timer card-panel">
       <div className="section-header">
         <h2>Active Timer</h2>
         <span className="status-pill">
-          {entry?.isRunning ? 'Running' : 'Idle'}
+          {entry ? timerStatus.charAt(0).toUpperCase() + timerStatus.slice(1) : 'Idle'}
         </span>
       </div>
 
       {!entry ? (
-        <div className="empty-shell">
+        <div className="empty-shell active-timer-empty">
           <div>
             <strong>No active timer</strong>
             <p>Pick a client and task, then start tracking work.</p>
+          </div>
+          <div className="active-timer-empty-actions">
+            <StartTimerButton onClick={onStart} disabled={loading} loading={loading} />
           </div>
         </div>
       ) : (
@@ -46,20 +64,50 @@ export function ActiveTimerCard({ entry, onStop, loading = false }: ActiveTimerC
 
           <div className="timer-actions">
             <div className="timer-meta-note">
-              <span>Started</span>
-              <strong>{formatDateTime(entry.startTime)}</strong>
+              <span>{isPaused ? 'Paused at' : 'Started'}</span>
+              <strong>{formatDateTime(isPaused && entry.pausedAt ? entry.pausedAt : entry.startTime)}</strong>
             </div>
-            <button
-              className="danger-action timer-stop-button"
-              type="button"
-              onClick={onStop}
-              disabled={loading || !entry.isRunning}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M7 7h10v10H7z" />
-              </svg>
-              <span>{loading ? 'Stopping...' : 'Stop Timer'}</span>
-            </button>
+            <div className="timer-action-row">
+              {isRunning ? (
+                <button
+                  className="timer-action-button timer-action-button-secondary"
+                  type="button"
+                  onClick={onPause}
+                  disabled={loading}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 6h4v12H7zm6 0h4v12h-4z" />
+                  </svg>
+                  <span>{loading ? 'Pausing...' : 'Pause'}</span>
+                </button>
+              ) : null}
+
+              {isPaused ? (
+                <button
+                  className="timer-action-button timer-action-button-secondary"
+                  type="button"
+                  onClick={onResume}
+                  disabled={loading}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <span>{loading ? 'Resuming...' : 'Resume'}</span>
+                </button>
+              ) : null}
+
+              <button
+                className="danger-action timer-stop-button"
+                type="button"
+                onClick={onStop}
+                disabled={loading || (!isRunning && !isPaused)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 7h10v10H7z" />
+                </svg>
+                <span>{loading ? 'Stopping...' : 'Stop'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

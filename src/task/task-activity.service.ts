@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 type TaskActivityWithActor = PrismaTypes.TaskActivityGetPayload<{
   include: {
     user: true;
+    task: true;
   };
 }>;
 
@@ -41,6 +42,7 @@ export class TaskActivityService {
       where: { taskId },
       include: {
         user: true,
+        task: true,
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });

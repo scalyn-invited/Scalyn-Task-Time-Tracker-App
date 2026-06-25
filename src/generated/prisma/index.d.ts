@@ -99,10 +99,22 @@ export const TaskActivityAction: {
   COMMENT_ADDED: 'COMMENT_ADDED',
   COMMENT_EDITED: 'COMMENT_EDITED',
   COMMENT_DELETED: 'COMMENT_DELETED',
-  COMMENT_REPLIED: 'COMMENT_REPLIED'
+  COMMENT_REPLIED: 'COMMENT_REPLIED',
+  TIMER_PAUSED: 'TIMER_PAUSED',
+  TIMER_RESUMED: 'TIMER_RESUMED',
+  TIMER_STOPPED: 'TIMER_STOPPED'
 };
 
 export type TaskActivityAction = (typeof TaskActivityAction)[keyof typeof TaskActivityAction]
+
+
+export const TimeEntryStatus: {
+  RUNNING: 'RUNNING',
+  PAUSED: 'PAUSED',
+  COMPLETED: 'COMPLETED'
+};
+
+export type TimeEntryStatus = (typeof TimeEntryStatus)[keyof typeof TimeEntryStatus]
 
 }
 
@@ -121,6 +133,10 @@ export const TaskStatus: typeof $Enums.TaskStatus
 export type TaskActivityAction = $Enums.TaskActivityAction
 
 export const TaskActivityAction: typeof $Enums.TaskActivityAction
+
+export type TimeEntryStatus = $Enums.TimeEntryStatus
+
+export const TimeEntryStatus: typeof $Enums.TimeEntryStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -8777,6 +8793,7 @@ export namespace Prisma {
     taskId: number | null
     clientId: number | null
     durationSeconds: number | null
+    totalPausedSeconds: number | null
   }
 
   export type TimeEntrySumAggregateOutputType = {
@@ -8785,6 +8802,7 @@ export namespace Prisma {
     taskId: number | null
     clientId: number | null
     durationSeconds: number | null
+    totalPausedSeconds: number | null
   }
 
   export type TimeEntryMinAggregateOutputType = {
@@ -8795,6 +8813,9 @@ export namespace Prisma {
     startTime: Date | null
     endTime: Date | null
     durationSeconds: number | null
+    totalPausedSeconds: number | null
+    pausedAt: Date | null
+    status: $Enums.TimeEntryStatus | null
     description: string | null
     isManual: boolean | null
     createdAt: Date | null
@@ -8809,6 +8830,9 @@ export namespace Prisma {
     startTime: Date | null
     endTime: Date | null
     durationSeconds: number | null
+    totalPausedSeconds: number | null
+    pausedAt: Date | null
+    status: $Enums.TimeEntryStatus | null
     description: string | null
     isManual: boolean | null
     createdAt: Date | null
@@ -8823,6 +8847,9 @@ export namespace Prisma {
     startTime: number
     endTime: number
     durationSeconds: number
+    totalPausedSeconds: number
+    pausedAt: number
+    status: number
     description: number
     isManual: number
     createdAt: number
@@ -8837,6 +8864,7 @@ export namespace Prisma {
     taskId?: true
     clientId?: true
     durationSeconds?: true
+    totalPausedSeconds?: true
   }
 
   export type TimeEntrySumAggregateInputType = {
@@ -8845,6 +8873,7 @@ export namespace Prisma {
     taskId?: true
     clientId?: true
     durationSeconds?: true
+    totalPausedSeconds?: true
   }
 
   export type TimeEntryMinAggregateInputType = {
@@ -8855,6 +8884,9 @@ export namespace Prisma {
     startTime?: true
     endTime?: true
     durationSeconds?: true
+    totalPausedSeconds?: true
+    pausedAt?: true
+    status?: true
     description?: true
     isManual?: true
     createdAt?: true
@@ -8869,6 +8901,9 @@ export namespace Prisma {
     startTime?: true
     endTime?: true
     durationSeconds?: true
+    totalPausedSeconds?: true
+    pausedAt?: true
+    status?: true
     description?: true
     isManual?: true
     createdAt?: true
@@ -8883,6 +8918,9 @@ export namespace Prisma {
     startTime?: true
     endTime?: true
     durationSeconds?: true
+    totalPausedSeconds?: true
+    pausedAt?: true
+    status?: true
     description?: true
     isManual?: true
     createdAt?: true
@@ -8984,6 +9022,9 @@ export namespace Prisma {
     startTime: Date
     endTime: Date | null
     durationSeconds: number
+    totalPausedSeconds: number
+    pausedAt: Date | null
+    status: $Enums.TimeEntryStatus
     description: string | null
     isManual: boolean
     createdAt: Date
@@ -9017,6 +9058,9 @@ export namespace Prisma {
     startTime?: boolean
     endTime?: boolean
     durationSeconds?: boolean
+    totalPausedSeconds?: boolean
+    pausedAt?: boolean
+    status?: boolean
     description?: boolean
     isManual?: boolean
     createdAt?: boolean
@@ -9035,6 +9079,9 @@ export namespace Prisma {
     startTime?: boolean
     endTime?: boolean
     durationSeconds?: boolean
+    totalPausedSeconds?: boolean
+    pausedAt?: boolean
+    status?: boolean
     description?: boolean
     isManual?: boolean
     createdAt?: boolean
@@ -9062,6 +9109,9 @@ export namespace Prisma {
       startTime: Date
       endTime: Date | null
       durationSeconds: number
+      totalPausedSeconds: number
+      pausedAt: Date | null
+      status: $Enums.TimeEntryStatus
       description: string | null
       isManual: boolean
       createdAt: Date
@@ -9445,6 +9495,9 @@ export namespace Prisma {
     readonly startTime: FieldRef<"TimeEntry", 'DateTime'>
     readonly endTime: FieldRef<"TimeEntry", 'DateTime'>
     readonly durationSeconds: FieldRef<"TimeEntry", 'Int'>
+    readonly totalPausedSeconds: FieldRef<"TimeEntry", 'Int'>
+    readonly pausedAt: FieldRef<"TimeEntry", 'DateTime'>
+    readonly status: FieldRef<"TimeEntry", 'TimeEntryStatus'>
     readonly description: FieldRef<"TimeEntry", 'String'>
     readonly isManual: FieldRef<"TimeEntry", 'Boolean'>
     readonly createdAt: FieldRef<"TimeEntry", 'DateTime'>
@@ -9879,6 +9932,9 @@ export namespace Prisma {
     startTime: 'startTime',
     endTime: 'endTime',
     durationSeconds: 'durationSeconds',
+    totalPausedSeconds: 'totalPausedSeconds',
+    pausedAt: 'pausedAt',
+    status: 'status',
     description: 'description',
     isManual: 'isManual',
     createdAt: 'createdAt',
@@ -9986,6 +10042,13 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'TimeEntryStatus'
+   */
+  export type EnumTimeEntryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TimeEntryStatus'>
     
 
 
@@ -10553,6 +10616,9 @@ export namespace Prisma {
     startTime?: DateTimeFilter<"TimeEntry"> | Date | string
     endTime?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
     durationSeconds?: IntFilter<"TimeEntry"> | number
+    totalPausedSeconds?: IntFilter<"TimeEntry"> | number
+    pausedAt?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
+    status?: EnumTimeEntryStatusFilter<"TimeEntry"> | $Enums.TimeEntryStatus
     description?: StringNullableFilter<"TimeEntry"> | string | null
     isManual?: BoolFilter<"TimeEntry"> | boolean
     createdAt?: DateTimeFilter<"TimeEntry"> | Date | string
@@ -10570,6 +10636,9 @@ export namespace Prisma {
     startTime?: SortOrder
     endTime?: SortOrderInput | SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+    pausedAt?: SortOrderInput | SortOrder
+    status?: SortOrder
     description?: SortOrderInput | SortOrder
     isManual?: SortOrder
     createdAt?: SortOrder
@@ -10590,6 +10659,9 @@ export namespace Prisma {
     startTime?: DateTimeFilter<"TimeEntry"> | Date | string
     endTime?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
     durationSeconds?: IntFilter<"TimeEntry"> | number
+    totalPausedSeconds?: IntFilter<"TimeEntry"> | number
+    pausedAt?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
+    status?: EnumTimeEntryStatusFilter<"TimeEntry"> | $Enums.TimeEntryStatus
     description?: StringNullableFilter<"TimeEntry"> | string | null
     isManual?: BoolFilter<"TimeEntry"> | boolean
     createdAt?: DateTimeFilter<"TimeEntry"> | Date | string
@@ -10607,6 +10679,9 @@ export namespace Prisma {
     startTime?: SortOrder
     endTime?: SortOrderInput | SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+    pausedAt?: SortOrderInput | SortOrder
+    status?: SortOrder
     description?: SortOrderInput | SortOrder
     isManual?: SortOrder
     createdAt?: SortOrder
@@ -10629,6 +10704,9 @@ export namespace Prisma {
     startTime?: DateTimeWithAggregatesFilter<"TimeEntry"> | Date | string
     endTime?: DateTimeNullableWithAggregatesFilter<"TimeEntry"> | Date | string | null
     durationSeconds?: IntWithAggregatesFilter<"TimeEntry"> | number
+    totalPausedSeconds?: IntWithAggregatesFilter<"TimeEntry"> | number
+    pausedAt?: DateTimeNullableWithAggregatesFilter<"TimeEntry"> | Date | string | null
+    status?: EnumTimeEntryStatusWithAggregatesFilter<"TimeEntry"> | $Enums.TimeEntryStatus
     description?: StringNullableWithAggregatesFilter<"TimeEntry"> | string | null
     isManual?: BoolWithAggregatesFilter<"TimeEntry"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"TimeEntry"> | Date | string
@@ -11186,6 +11264,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -11203,6 +11284,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -11213,6 +11297,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11230,6 +11317,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11244,6 +11334,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -11254,6 +11347,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11268,6 +11364,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11965,6 +12064,13 @@ export namespace Prisma {
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
+  export type EnumTimeEntryStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TimeEntryStatus | EnumTimeEntryStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TimeEntryStatus[]
+    notIn?: $Enums.TimeEntryStatus[]
+    not?: NestedEnumTimeEntryStatusFilter<$PrismaModel> | $Enums.TimeEntryStatus
+  }
+
   export type TimeEntryCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
@@ -11973,6 +12079,9 @@ export namespace Prisma {
     startTime?: SortOrder
     endTime?: SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+    pausedAt?: SortOrder
+    status?: SortOrder
     description?: SortOrder
     isManual?: SortOrder
     createdAt?: SortOrder
@@ -11985,6 +12094,7 @@ export namespace Prisma {
     taskId?: SortOrder
     clientId?: SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
   }
 
   export type TimeEntryMaxOrderByAggregateInput = {
@@ -11995,6 +12105,9 @@ export namespace Prisma {
     startTime?: SortOrder
     endTime?: SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+    pausedAt?: SortOrder
+    status?: SortOrder
     description?: SortOrder
     isManual?: SortOrder
     createdAt?: SortOrder
@@ -12009,6 +12122,9 @@ export namespace Prisma {
     startTime?: SortOrder
     endTime?: SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+    pausedAt?: SortOrder
+    status?: SortOrder
     description?: SortOrder
     isManual?: SortOrder
     createdAt?: SortOrder
@@ -12021,6 +12137,17 @@ export namespace Prisma {
     taskId?: SortOrder
     clientId?: SortOrder
     durationSeconds?: SortOrder
+    totalPausedSeconds?: SortOrder
+  }
+
+  export type EnumTimeEntryStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TimeEntryStatus | EnumTimeEntryStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TimeEntryStatus[]
+    notIn?: $Enums.TimeEntryStatus[]
+    not?: NestedEnumTimeEntryStatusWithAggregatesFilter<$PrismaModel> | $Enums.TimeEntryStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTimeEntryStatusFilter<$PrismaModel>
+    _max?: NestedEnumTimeEntryStatusFilter<$PrismaModel>
   }
 
   export type ClientCreateNestedManyWithoutUserInput = {
@@ -12857,6 +12984,10 @@ export namespace Prisma {
     connect?: ClientWhereUniqueInput
   }
 
+  export type EnumTimeEntryStatusFieldUpdateOperationsInput = {
+    set?: $Enums.TimeEntryStatus
+  }
+
   export type UserUpdateOneRequiredWithoutTimeEntriesNestedInput = {
     create?: XOR<UserCreateWithoutTimeEntriesInput, UserUncheckedCreateWithoutTimeEntriesInput>
     connectOrCreate?: UserCreateOrConnectWithoutTimeEntriesInput
@@ -13172,6 +13303,23 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumTimeEntryStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TimeEntryStatus | EnumTimeEntryStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TimeEntryStatus[]
+    notIn?: $Enums.TimeEntryStatus[]
+    not?: NestedEnumTimeEntryStatusFilter<$PrismaModel> | $Enums.TimeEntryStatus
+  }
+
+  export type NestedEnumTimeEntryStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TimeEntryStatus | EnumTimeEntryStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TimeEntryStatus[]
+    notIn?: $Enums.TimeEntryStatus[]
+    not?: NestedEnumTimeEntryStatusWithAggregatesFilter<$PrismaModel> | $Enums.TimeEntryStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTimeEntryStatusFilter<$PrismaModel>
+    _max?: NestedEnumTimeEntryStatusFilter<$PrismaModel>
+  }
+
   export type ClientCreateWithoutUserInput = {
     name: string
     description?: string | null
@@ -13252,6 +13400,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -13267,6 +13418,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -13461,6 +13615,9 @@ export namespace Prisma {
     startTime?: DateTimeFilter<"TimeEntry"> | Date | string
     endTime?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
     durationSeconds?: IntFilter<"TimeEntry"> | number
+    totalPausedSeconds?: IntFilter<"TimeEntry"> | number
+    pausedAt?: DateTimeNullableFilter<"TimeEntry"> | Date | string | null
+    status?: EnumTimeEntryStatusFilter<"TimeEntry"> | $Enums.TimeEntryStatus
     description?: StringNullableFilter<"TimeEntry"> | string | null
     isManual?: BoolFilter<"TimeEntry"> | boolean
     createdAt?: DateTimeFilter<"TimeEntry"> | Date | string
@@ -13636,6 +13793,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -13651,6 +13811,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -13914,6 +14077,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -13929,6 +14095,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -14965,6 +15134,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -15083,6 +15255,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15098,6 +15273,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15111,6 +15289,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15224,6 +15405,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -15276,6 +15460,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15291,6 +15478,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15304,6 +15494,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15347,6 +15540,9 @@ export namespace Prisma {
     startTime: Date | string
     endTime?: Date | string | null
     durationSeconds: number
+    totalPausedSeconds?: number
+    pausedAt?: Date | string | null
+    status?: $Enums.TimeEntryStatus
     description?: string | null
     isManual?: boolean
     createdAt?: Date | string
@@ -15466,6 +15662,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15481,6 +15680,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15494,6 +15696,9 @@ export namespace Prisma {
     startTime?: DateTimeFieldUpdateOperationsInput | Date | string
     endTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     durationSeconds?: IntFieldUpdateOperationsInput | number
+    totalPausedSeconds?: IntFieldUpdateOperationsInput | number
+    pausedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumTimeEntryStatusFieldUpdateOperationsInput | $Enums.TimeEntryStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     isManual?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

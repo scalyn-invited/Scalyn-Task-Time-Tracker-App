@@ -41,6 +41,15 @@ enum TaskActivityAction {
   COMMENT_EDITED
   COMMENT_DELETED
   COMMENT_REPLIED
+  TIMER_PAUSED
+  TIMER_RESUMED
+  TIMER_STOPPED
+}
+
+enum TimeEntryStatus {
+  RUNNING
+  PAUSED
+  COMPLETED
 }
 
 model User {
@@ -168,6 +177,9 @@ model TimeEntry {
   startTime        DateTime
   endTime          DateTime?
   durationSeconds  Int
+  totalPausedSeconds Int     @default(0)
+  pausedAt         DateTime?
+  status           TimeEntryStatus @default(RUNNING)
   description      String?   @db.Text
   isManual         Boolean   @default(false)
   user             User      @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Restrict)
@@ -177,6 +189,7 @@ model TimeEntry {
   updatedAt        DateTime  @updatedAt
 
   @@index([userId, endTime])
+  @@index([userId, status])
   @@index([userId, startTime])
   @@index([taskId, startTime])
   @@index([clientId, startTime])

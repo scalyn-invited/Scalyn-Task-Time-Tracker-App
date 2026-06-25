@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  createManualTimeEntry,
   createTask,
   deleteTask,
   fetchActiveTimer,
@@ -8,14 +7,14 @@ import {
   fetchLabels,
   fetchTasks,
   fetchUsers,
-  startTimer,
   updateTask,
   uploadTaskAttachments,
 } from '../../lib/api';
 import { TaskDataTable } from '../../components/tasks/TaskDataTable';
+import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import { CreateTaskModal } from '../../modals/CreateTaskModal';
 import { EditTaskModal } from '../../modals/EditTaskModal';
-import type { Client, ManualEntryPayload, SafeUser, StartTimerPayload, TaskFormValues, TaskLabel, TaskRecord, TimeEntry } from '../../types';
+import type { Client, SafeUser, TaskFormValues, TaskLabel, TaskRecord, TimeEntry } from '../../types';
 
 export function TasksPage() {
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -68,26 +67,16 @@ export function TasksPage() {
   }, []);
 
   useEffect(() => {
-    if (!pendingDeleteTask) {
-      document.body.classList.remove('confirm-modal-open');
-      return;
-    }
-
-    document.body.classList.add('confirm-modal-open');
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setPendingDeleteTask(null);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
+    const interval = window.setInterval(() => {
+      void fetchActiveTimer()
+        .then(setActiveTimer)
+        .catch(() => undefined);
+    }, 5000);
 
     return () => {
-      document.body.classList.remove('confirm-modal-open');
-      window.removeEventListener('keydown', handleKeyDown);
+      window.clearInterval(interval);
     };
-  }, [pendingDeleteTask]);
+  }, []);
 
   const saveNewTask = async (values: TaskFormValues, pendingFiles: File[]) => {
     const task = await createTask(values);
@@ -104,22 +93,14 @@ export function TasksPage() {
     return updated;
   };
 
-  const updateTaskLabels = async (task: TaskRecord, nextLabels: string[]) => {
-    await updateTask(task.id, { labels: nextLabels });
+  const updateTaskFields = async (task: TaskRecord, values: Partial<Pick<TaskFormValues, 'status' | 'priority'>>) => {
+    await updateTask(task.id, values);
     await loadPage({ clientId: selectedClientId, userId: selectedUserId });
   };
 
-  const runTaskTimer = async (payload: StartTimerPayload) => {
-    const entry = await startTimer(payload);
-    setActiveTimer(entry);
-    setFeedback('');
-  };
-
-  const saveManualEntry = async (payload: ManualEntryPayload) => {
-    await createManualTimeEntry(payload);
-    const nextActiveTimer = await fetchActiveTimer().catch(() => activeTimer);
-    setActiveTimer(nextActiveTimer);
-    setFeedback('');
+  const updateTaskLabels = async (task: TaskRecord, nextLabels: string[]) => {
+    await updateTask(task.id, { labels: nextLabels });
+    await loadPage({ clientId: selectedClientId, userId: selectedUserId });
   };
 
   const confirmDeleteTask = async () => {
@@ -230,8 +211,7 @@ export function TasksPage() {
             onEdit={(task) => setEditingTask(task)}
             onDelete={(task) => setPendingDeleteTask(task)}
             onUpdateLabels={(task, nextLabels) => updateTaskLabels(task, nextLabels)}
-            onStartTimer={runTaskTimer}
-            onCreateManualEntry={saveManualEntry}
+            onUpdateTask={(task, values) => updateTaskFields(task, values)}
           />
         )}
       </section>
@@ -257,65 +237,20 @@ export function TasksPage() {
         />
       ) : null}
 
-      {pendingDeleteTask ? (
-        <div className="confirm-modal" data-destructive="true">
-          <div
-            className="confirm-modal-overlay"
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                setPendingDeleteTask(null);
-              }
-            }}
-          >
-            <section
-              className="confirm-modal-dialog"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="task-delete-confirm-title"
-              aria-describedby="task-delete-confirm-message"
-            >
-              <header className="confirm-modal-header">
-                <div>
-                  <p className="route-eyebrow">Confirm action</p>
-                  <h2 id="task-delete-confirm-title">Delete task?</h2>
-                </div>
-                <button
-                  className="modal-close-button confirm-modal-close"
-                  type="button"
-                  onClick={() => setPendingDeleteTask(null)}
-                  aria-label="Close confirmation dialog"
-                >
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </header>
-              <div className="confirm-modal-body">
-                <p id="task-delete-confirm-message" className="confirm-modal-message">
-                  Delete &quot;{pendingDeleteTask.title}&quot;? This action cannot be undone.
-                </p>
-                <div className="form-actions confirm-modal-actions">
-                  <button
-                    className="btn btn-secondary confirm-modal-cancel"
-                    type="button"
-                    onClick={() => setPendingDeleteTask(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn btn-primary confirm-modal-confirm"
-                    type="button"
-                    data-variant="destructive"
-                    onClick={() => {
-                      void confirmDeleteTask();
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmModal
+        open={Boolean(pendingDeleteTask)}
+        title="Delete task?"
+        message={pendingDeleteTask ? <>Delete &quot;{pendingDeleteTask.title}&quot;? This action cannot be undone.</> : ''}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        titleId="task-delete-confirm-title"
+        messageId="task-delete-confirm-message"
+        onClose={() => setPendingDeleteTask(null)}
+        onConfirm={() => {
+          void confirmDeleteTask();
+        }}
+      />
     </section>
   );
 }

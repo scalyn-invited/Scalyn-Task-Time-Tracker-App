@@ -204,6 +204,9 @@ exports.Prisma.TimeEntryScalarFieldEnum = {
   startTime: 'startTime',
   endTime: 'endTime',
   durationSeconds: 'durationSeconds',
+  totalPausedSeconds: 'totalPausedSeconds',
+  pausedAt: 'pausedAt',
+  status: 'status',
   description: 'description',
   isManual: 'isManual',
   createdAt: 'createdAt',
@@ -262,7 +265,16 @@ exports.TaskActivityAction = exports.$Enums.TaskActivityAction = {
   COMMENT_ADDED: 'COMMENT_ADDED',
   COMMENT_EDITED: 'COMMENT_EDITED',
   COMMENT_DELETED: 'COMMENT_DELETED',
-  COMMENT_REPLIED: 'COMMENT_REPLIED'
+  COMMENT_REPLIED: 'COMMENT_REPLIED',
+  TIMER_PAUSED: 'TIMER_PAUSED',
+  TIMER_RESUMED: 'TIMER_RESUMED',
+  TIMER_STOPPED: 'TIMER_STOPPED'
+};
+
+exports.TimeEntryStatus = exports.$Enums.TimeEntryStatus = {
+  RUNNING: 'RUNNING',
+  PAUSED: 'PAUSED',
+  COMPLETED: 'COMPLETED'
 };
 
 exports.Prisma.ModelName = {

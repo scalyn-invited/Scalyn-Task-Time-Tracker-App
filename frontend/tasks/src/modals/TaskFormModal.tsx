@@ -251,9 +251,13 @@ export function TaskFormModal({
                 {pendingFiles.map((file, index) => (
                   <div key={`${file.name}-${index}`} className="pending-attachment-item">
                     <span>{file.name}</span>
-                    <button type="button" className="client-action client-action-edit" onClick={() => {
-                      setPendingFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
-                    }}>
+                    <button
+                      type="button"
+                      className="client-action client-action-edit"
+                      onClick={() => {
+                        setPendingFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
+                      }}
+                    >
                       Remove
                     </button>
                   </div>

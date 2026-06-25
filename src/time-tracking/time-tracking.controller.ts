@@ -45,6 +45,24 @@ export class TimeTrackingController {
     return this.timeTrackingService.startTimer(req.user.id, dto);
   }
 
+  @Post('pause')
+  @Header('Cache-Control', 'no-store')
+  @HttpCode(HttpStatus.OK)
+  async pause(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<TimeEntryResponse> {
+    return this.timeTrackingService.pauseTimer(req.user.id);
+  }
+
+  @Post('resume')
+  @Header('Cache-Control', 'no-store')
+  @HttpCode(HttpStatus.OK)
+  async resume(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<TimeEntryResponse> {
+    return this.timeTrackingService.resumeTimer(req.user.id);
+  }
+
   @Post('stop')
   @Header('Cache-Control', 'no-store')
   @HttpCode(HttpStatus.OK)

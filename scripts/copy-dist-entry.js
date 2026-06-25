@@ -28,7 +28,20 @@ function copyRecursive(from, to) {
       continue;
     }
 
-    fs.copyFileSync(sourcePath, targetPath);
+    try {
+      fs.copyFileSync(sourcePath, targetPath);
+    } catch (error) {
+      const isLockedPrismaEngine =
+        entry.name === 'query_engine-windows.dll.node' &&
+        fs.existsSync(targetPath) &&
+        (error.code === 'EPERM' || error.code === 'UNKNOWN');
+
+      if (isLockedPrismaEngine) {
+        continue;
+      }
+
+      throw error;
+    }
   }
 }
 

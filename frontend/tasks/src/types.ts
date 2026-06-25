@@ -77,6 +77,7 @@ export interface TaskActivity {
   metadata: Record<string, unknown> | null;
   createdAt: string;
   user: SafeUser;
+  task: Pick<TaskRecord, 'id' | 'title'>;
 }
 
 export interface TaskFormValues {
@@ -97,12 +98,16 @@ export interface TimeEntry {
   startTime: string;
   endTime: string | null;
   durationSeconds: number;
+  totalPausedSeconds: number;
+  pausedAt: string | null;
+  status: 'running' | 'paused' | 'completed';
   description: string | null;
   isManual: boolean;
   createdAt: string;
   updatedAt: string;
   elapsedSeconds: number;
   isRunning: boolean;
+  isPaused: boolean;
   task: Pick<TaskRecord, 'id' | 'title' | 'clientId' | 'client'>;
   client: Client;
 }

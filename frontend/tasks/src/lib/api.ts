@@ -218,6 +218,25 @@ export function startTimer(values: StartTimerPayload): Promise<TimeEntry> {
   });
 }
 
+export function pauseTimer(): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/pause', {
+    method: 'POST',
+  });
+}
+
+export function resumeTimer(): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/resume', {
+    method: 'POST',
+  });
+}
+
+export function stopTimer(values: { description?: string } = {}): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/stop', {
+    method: 'POST',
+    body: JSON.stringify(values),
+  });
+}
+
 export function createManualTimeEntry(values: ManualEntryPayload): Promise<TimeEntry> {
   return request<TimeEntry>('/timer/manual', {
     method: 'POST',

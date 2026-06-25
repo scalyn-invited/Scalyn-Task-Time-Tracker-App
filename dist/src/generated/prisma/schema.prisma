@@ -41,6 +41,15 @@ enum TaskActivityAction {
   COMMENT_EDITED
   COMMENT_DELETED
   COMMENT_REPLIED
+  TIMER_PAUSED
+  TIMER_RESUMED
+  TIMER_STOPPED
+}
+
+enum TimeEntryStatus {
+  RUNNING
+  PAUSED
+  COMPLETED
 }
 
 model User {
@@ -161,22 +170,26 @@ model TaskActivity {
 }
 
 model TimeEntry {
-  id              Int       @id @default(autoincrement())
-  userId          Int
-  taskId          Int
-  clientId        Int
-  startTime       DateTime
-  endTime         DateTime?
-  durationSeconds Int
-  description     String?   @db.Text
-  isManual        Boolean   @default(false)
-  user            User      @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Restrict)
-  task            Task      @relation("TimeEntryTask", fields: [taskId], references: [id], onDelete: Restrict)
-  client          Client    @relation("TimeEntryClient", fields: [clientId], references: [id], onDelete: Restrict)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                 Int             @id @default(autoincrement())
+  userId             Int
+  taskId             Int
+  clientId           Int
+  startTime          DateTime
+  endTime            DateTime?
+  durationSeconds    Int
+  totalPausedSeconds Int             @default(0)
+  pausedAt           DateTime?
+  status             TimeEntryStatus @default(RUNNING)
+  description        String?         @db.Text
+  isManual           Boolean         @default(false)
+  user               User            @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Restrict)
+  task               Task            @relation("TimeEntryTask", fields: [taskId], references: [id], onDelete: Restrict)
+  client             Client          @relation("TimeEntryClient", fields: [clientId], references: [id], onDelete: Restrict)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@index([userId, endTime])
+  @@index([userId, status])
   @@index([userId, startTime])
   @@index([taskId, startTime])
   @@index([clientId, startTime])

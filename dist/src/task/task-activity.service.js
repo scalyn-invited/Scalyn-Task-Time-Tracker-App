@@ -34,6 +34,7 @@ let TaskActivityService = class TaskActivityService {
             where: { taskId },
             include: {
                 user: true,
+                task: true,
             },
             orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         });

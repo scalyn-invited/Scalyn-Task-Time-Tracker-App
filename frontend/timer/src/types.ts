@@ -32,6 +32,8 @@ export interface TimeEntryTask {
   client: TimeEntryClient;
 }
 
+export type TimerStatus = 'running' | 'paused' | 'completed';
+
 export interface TimeEntry {
   id: number;
   userId: number;
@@ -40,12 +42,16 @@ export interface TimeEntry {
   startTime: string;
   endTime: string | null;
   durationSeconds: number;
+  totalPausedSeconds: number;
+  pausedAt: string | null;
+  status: TimerStatus;
   description: string | null;
   isManual: boolean;
   createdAt: string;
   updatedAt: string;
   elapsedSeconds: number;
   isRunning: boolean;
+  isPaused: boolean;
   task: TimeEntryTask;
   client: TimeEntryClient;
 }

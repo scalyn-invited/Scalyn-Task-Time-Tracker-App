@@ -30,7 +30,9 @@ let TimeTrackingService = class TimeTrackingService {
         const activeEntry = await this.prisma.timeEntry.findFirst({
             where: {
                 userId,
-                endTime: null,
+                status: {
+                    in: [prisma_client_1.TimeEntryStatus.RUNNING, prisma_client_1.TimeEntryStatus.PAUSED],
+                },
             },
             include: this.timeEntryInclude,
             orderBy: [
@@ -51,8 +53,8 @@ let TimeTrackingService = class TimeTrackingService {
         const description = this.normalizeDescription(dto.description);
         const startedAt = new Date();
         return this.prisma.$transaction(async (tx) => {
+            await this.assertNoActiveTimer(tx, userId);
             const { client, task } = await this.findOwnedTaskAndClientOrFail(tx, userId, dto.clientId, dto.taskId);
-            await this.closeActiveTimers(tx, userId, startedAt);
             const entry = await tx.timeEntry.create({
                 data: {
                     userId,
@@ -61,6 +63,9 @@ let TimeTrackingService = class TimeTrackingService {
                     startTime: startedAt,
                     endTime: null,
                     durationSeconds: 0,
+                    totalPausedSeconds: 0,
+                    pausedAt: null,
+                    status: prisma_client_1.TimeEntryStatus.RUNNING,
                     description,
                     isManual: false,
                 },
@@ -71,39 +76,72 @@ let TimeTrackingService = class TimeTrackingService {
             isolationLevel: prisma_client_1.Prisma.TransactionIsolationLevel.Serializable,
         });
     }
+    async pauseTimer(userId) {
+        const pausedAt = new Date();
+        return this.prisma.$transaction(async (tx) => {
+            const activeEntry = await this.findActiveTimerOrFail(tx, userId, prisma_client_1.TimeEntryStatus.RUNNING);
+            const updated = await tx.timeEntry.update({
+                where: {
+                    id: activeEntry.id,
+                },
+                data: {
+                    pausedAt,
+                    status: prisma_client_1.TimeEntryStatus.PAUSED,
+                },
+                include: this.timeEntryInclude,
+            });
+            await this.recordTimerActivity(tx, updated, 'TIMER_PAUSED', {
+                pausedAt: pausedAt.toISOString(),
+                totalPausedSeconds: updated.totalPausedSeconds,
+            });
+            return this.formatResponse(updated, pausedAt);
+        }, {
+            isolationLevel: prisma_client_1.Prisma.TransactionIsolationLevel.Serializable,
+        });
+    }
+    async resumeTimer(userId) {
+        const resumedAt = new Date();
+        return this.prisma.$transaction(async (tx) => {
+            const activeEntry = await this.findActiveTimerOrFail(tx, userId, prisma_client_1.TimeEntryStatus.PAUSED);
+            if (!activeEntry.pausedAt) {
+                throw new common_1.BadRequestException('Paused timer is missing a pause timestamp');
+            }
+            const pauseDurationSeconds = this.calculateDurationSeconds(activeEntry.pausedAt, resumedAt);
+            const updated = await tx.timeEntry.update({
+                where: {
+                    id: activeEntry.id,
+                },
+                data: {
+                    pausedAt: null,
+                    totalPausedSeconds: activeEntry.totalPausedSeconds + pauseDurationSeconds,
+                    status: prisma_client_1.TimeEntryStatus.RUNNING,
+                },
+                include: this.timeEntryInclude,
+            });
+            await this.recordTimerActivity(tx, updated, 'TIMER_RESUMED', {
+                resumedAt: resumedAt.toISOString(),
+                pauseDurationSeconds,
+                totalPausedSeconds: updated.totalPausedSeconds,
+            });
+            return this.formatResponse(updated, resumedAt);
+        }, {
+            isolationLevel: prisma_client_1.Prisma.TransactionIsolationLevel.Serializable,
+        });
+    }
     async stopTimer(userId, dto) {
         const stoppedAt = new Date();
         const description = this.normalizeDescription(dto.description);
         return this.prisma.$transaction(async (tx) => {
-            const activeEntries = await tx.timeEntry.findMany({
-                where: {
-                    userId,
-                    endTime: null,
-                },
-                include: this.timeEntryInclude,
-                orderBy: [
-                    {
-                        startTime: 'desc',
-                    },
-                    {
-                        id: 'desc',
-                    },
-                ],
+            const activeEntry = await this.findActiveTimerOrFail(tx, userId, [
+                prisma_client_1.TimeEntryStatus.RUNNING,
+                prisma_client_1.TimeEntryStatus.PAUSED,
+            ]);
+            const completed = await this.completeTimerEntry(tx, activeEntry, stoppedAt, description);
+            await this.recordTimerActivity(tx, completed, 'TIMER_STOPPED', {
+                stoppedAt: stoppedAt.toISOString(),
+                totalPausedSeconds: completed.totalPausedSeconds,
+                durationSeconds: completed.durationSeconds,
             });
-            if (activeEntries.length === 0) {
-                throw new common_1.NotFoundException('No active timer found');
-            }
-            for (const activeEntry of activeEntries) {
-                await this.closeEntry(tx, activeEntry, stoppedAt, description);
-            }
-            const stoppedEntry = activeEntries[0];
-            const completed = await tx.timeEntry.findUnique({
-                where: { id: stoppedEntry.id },
-                include: this.timeEntryInclude,
-            });
-            if (!completed) {
-                throw new common_1.NotFoundException('Active timer not found');
-            }
             return this.formatResponse(completed, stoppedAt);
         }, {
             isolationLevel: prisma_client_1.Prisma.TransactionIsolationLevel.Serializable,
@@ -124,6 +162,9 @@ let TimeTrackingService = class TimeTrackingService {
                     startTime,
                     endTime: endedAt,
                     durationSeconds,
+                    totalPausedSeconds: 0,
+                    pausedAt: null,
+                    status: prisma_client_1.TimeEntryStatus.COMPLETED,
                     description,
                     isManual: true,
                 },
@@ -134,11 +175,16 @@ let TimeTrackingService = class TimeTrackingService {
             isolationLevel: prisma_client_1.Prisma.TransactionIsolationLevel.Serializable,
         });
     }
-    async closeActiveTimers(tx, userId, endedAt) {
-        const activeEntries = await tx.timeEntry.findMany({
+    async assertNoActiveTimer(tx, userId) {
+        const activeTimer = await tx.timeEntry.findFirst({
             where: {
                 userId,
-                endTime: null,
+                status: {
+                    in: [prisma_client_1.TimeEntryStatus.RUNNING, prisma_client_1.TimeEntryStatus.PAUSED],
+                },
+            },
+            select: {
+                id: true,
             },
             orderBy: [
                 {
@@ -149,20 +195,76 @@ let TimeTrackingService = class TimeTrackingService {
                 },
             ],
         });
-        for (const activeEntry of activeEntries) {
-            await this.closeEntry(tx, activeEntry, endedAt);
+        if (activeTimer) {
+            throw new common_1.BadRequestException('An active timer already exists. Pause or stop it before starting a new one.');
         }
     }
-    async closeEntry(tx, entry, endedAt, description) {
-        const durationSeconds = this.calculateDurationSeconds(entry.startTime, endedAt);
-        await tx.timeEntry.update({
+    async findActiveTimerOrFail(tx, userId, status) {
+        const statuses = Array.isArray(status) ? status : [status];
+        const entry = await tx.timeEntry.findFirst({
+            where: {
+                userId,
+                status: {
+                    in: statuses,
+                },
+            },
+            include: this.timeEntryInclude,
+            orderBy: [
+                {
+                    startTime: 'desc',
+                },
+                {
+                    id: 'desc',
+                },
+            ],
+        });
+        if (!entry) {
+            const stateLabel = statuses.length === 1 ? this.toTimerStateLabel(statuses[0]) : 'active';
+            throw new common_1.BadRequestException(`No ${stateLabel} timer found`);
+        }
+        return entry;
+    }
+    async completeTimerEntry(tx, entry, stoppedAt, description) {
+        if (entry.status === prisma_client_1.TimeEntryStatus.PAUSED && !entry.pausedAt) {
+            throw new common_1.BadRequestException('Paused timer is missing a pause timestamp');
+        }
+        const pauseDurationSeconds = entry.status === prisma_client_1.TimeEntryStatus.PAUSED && entry.pausedAt
+            ? this.calculateDurationSeconds(entry.pausedAt, stoppedAt)
+            : 0;
+        const totalPausedSeconds = entry.totalPausedSeconds + pauseDurationSeconds;
+        const durationSeconds = this.calculateDurationSeconds(entry.startTime, stoppedAt) - totalPausedSeconds;
+        if (durationSeconds < 0) {
+            throw new common_1.BadRequestException('Calculated duration cannot be negative');
+        }
+        return tx.timeEntry.update({
             where: {
                 id: entry.id,
             },
             data: {
-                endTime: endedAt,
+                endTime: stoppedAt,
                 durationSeconds,
+                totalPausedSeconds,
+                pausedAt: null,
+                status: prisma_client_1.TimeEntryStatus.COMPLETED,
                 ...(description !== undefined ? { description } : {}),
+            },
+            include: this.timeEntryInclude,
+        });
+    }
+    async recordTimerActivity(tx, entry, action, metadata) {
+        await tx.taskActivity.create({
+            data: {
+                taskId: entry.taskId,
+                userId: entry.userId,
+                action,
+                entityType: 'time_entry',
+                entityId: entry.id,
+                metadata: {
+                    ...metadata,
+                    timerStatus: this.toApiTimerStatus(entry.status),
+                    taskTitle: entry.task.title,
+                    clientId: entry.clientId,
+                },
             },
         });
     }
@@ -218,14 +320,46 @@ let TimeTrackingService = class TimeTrackingService {
         return normalized.length > 0 ? normalized : null;
     }
     formatResponse(entry, now) {
-        const isRunning = entry.endTime === null;
+        const status = this.toApiTimerStatus(entry.status);
+        const elapsedSeconds = this.calculateElapsedSeconds(entry, now);
         return {
             ...entry,
-            elapsedSeconds: isRunning
-                ? this.calculateDurationSeconds(entry.startTime, now)
-                : entry.durationSeconds,
-            isRunning,
+            status,
+            elapsedSeconds,
+            isRunning: status === 'running',
+            isPaused: status === 'paused',
         };
+    }
+    calculateElapsedSeconds(entry, now) {
+        const endReference = entry.status === prisma_client_1.TimeEntryStatus.PAUSED
+            ? entry.pausedAt ?? now
+            : entry.endTime ?? now;
+        const duration = this.calculateDurationSeconds(entry.startTime, endReference) - entry.totalPausedSeconds;
+        return Math.max(0, duration);
+    }
+    toApiTimerStatus(status) {
+        switch (status) {
+            case prisma_client_1.TimeEntryStatus.RUNNING:
+                return 'running';
+            case prisma_client_1.TimeEntryStatus.PAUSED:
+                return 'paused';
+            case prisma_client_1.TimeEntryStatus.COMPLETED:
+                return 'completed';
+            default:
+                return 'completed';
+        }
+    }
+    toTimerStateLabel(status) {
+        switch (status) {
+            case prisma_client_1.TimeEntryStatus.RUNNING:
+                return 'running';
+            case prisma_client_1.TimeEntryStatus.PAUSED:
+                return 'paused';
+            case prisma_client_1.TimeEntryStatus.COMPLETED:
+                return 'completed';
+            default:
+                return 'active';
+        }
     }
 };
 exports.TimeTrackingService = TimeTrackingService;

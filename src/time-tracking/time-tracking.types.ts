@@ -7,6 +7,8 @@ export type TimeEntryWithRelations = TimeEntry & {
   client: Client;
 };
 
+export type TimerStatus = 'running' | 'paused' | 'completed';
+
 export interface TimeEntryResponse {
   id: number;
   userId: number;
@@ -15,12 +17,16 @@ export interface TimeEntryResponse {
   startTime: Date;
   endTime: Date | null;
   durationSeconds: number;
+  totalPausedSeconds: number;
+  pausedAt: Date | null;
+  status: TimerStatus;
   description: string | null;
   isManual: boolean;
   createdAt: Date;
   updatedAt: Date;
   elapsedSeconds: number;
   isRunning: boolean;
+  isPaused: boolean;
   task: Task & {
     client: Client;
   };

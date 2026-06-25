@@ -1,3 +1,5 @@
+import type { ManualEntryPayload, StartTimerPayload, StopTimerPayload, TimeEntry } from '../types';
+
 const TOKEN_KEY = 'sttt_access_token';
 
 export class ApiError extends Error {
@@ -69,4 +71,41 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   }
 
   return payload as T;
+}
+
+export function fetchActiveTimer(): Promise<TimeEntry | null> {
+  return request<TimeEntry | null>('/timer/active');
+}
+
+export function startTimer(values: StartTimerPayload): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/start', {
+    method: 'POST',
+    body: JSON.stringify(values),
+  });
+}
+
+export function pauseTimer(): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/pause', {
+    method: 'POST',
+  });
+}
+
+export function resumeTimer(): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/resume', {
+    method: 'POST',
+  });
+}
+
+export function stopTimer(values: StopTimerPayload = {}): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/stop', {
+    method: 'POST',
+    body: JSON.stringify(values),
+  });
+}
+
+export function createManualTimeEntry(values: ManualEntryPayload): Promise<TimeEntry> {
+  return request<TimeEntry>('/timer/manual', {
+    method: 'POST',
+    body: JSON.stringify(values),
+  });
 }

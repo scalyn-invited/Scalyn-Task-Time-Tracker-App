@@ -30,6 +30,12 @@ let TimeTrackingController = class TimeTrackingController {
     async start(req, dto) {
         return this.timeTrackingService.startTimer(req.user.id, dto);
     }
+    async pause(req) {
+        return this.timeTrackingService.pauseTimer(req.user.id);
+    }
+    async resume(req) {
+        return this.timeTrackingService.resumeTimer(req.user.id);
+    }
     async stop(req, dto) {
         return this.timeTrackingService.stopTimer(req.user.id, dto);
     }
@@ -56,6 +62,24 @@ __decorate([
     __metadata("design:paramtypes", [Object, start_timer_dto_1.StartTimerDto]),
     __metadata("design:returntype", Promise)
 ], TimeTrackingController.prototype, "start", null);
+__decorate([
+    (0, common_1.Post)('pause'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TimeTrackingController.prototype, "pause", null);
+__decorate([
+    (0, common_1.Post)('resume'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TimeTrackingController.prototype, "resume", null);
 __decorate([
     (0, common_1.Post)('stop'),
     (0, common_1.Header)('Cache-Control', 'no-store'),
