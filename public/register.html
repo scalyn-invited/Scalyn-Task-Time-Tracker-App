@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register | Scalyn Task Time Tracker</title>
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script defer src="/assets/js/app.js"></script>
+  </head>
+  <body data-page="register">
+    <main class="shell">
+      <section class="page">
+        <header class="topbar">
+          <a class="brand" href="/">
+            <div class="brand-mark">S</div>
+            <div>Scalyn Task Time Tracker</div>
+          </a>
+          <nav class="nav">
+            <a href="/login">Login</a>
+            <a href="/profile">Profile</a>
+          </nav>
+        </header>
+
+        <div class="hero-grid">
+          <article class="hero-card">
+            <div class="eyebrow">Create your account</div>
+            <h1 class="hero-title">Start tracking with a clean, focused workflow.</h1>
+            <p class="hero-copy">
+              Register a new account and use the same JWT-based profile API that powers the backend.
+              The UI stays lightweight so it remains easy to deploy and maintain.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-secondary" href="/login">Already registered?</a>
+            </div>
+          </article>
+
+          <section class="form-card">
+            <div class="form-head">
+              <h2 class="form-title">Register</h2>
+              <p class="form-subtitle">Create a user account to access your profile.</p>
+            </div>
+
+            <form class="profile-form" data-register-form>
+              <div class="field">
+                <label for="register-name">Name</label>
+                <input id="register-name" name="name" type="text" minlength="2" maxlength="100" required />
+              </div>
+
+              <div class="field">
+                <label for="register-email">Email</label>
+                <input id="register-email" name="email" type="email" autocomplete="email" required />
+              </div>
+
+              <div class="field">
+                <label for="register-password">Password</label>
+                <input
+                  id="register-password"
+                  name="password"
+                  type="password"
+                  autocomplete="new-password"
+                  minlength="6"
+                  required
+                />
+                <div class="help">Use at least 6 characters.</div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Create account</button>
+                <a class="mini-link" href="/login">Back to login</a>
+              </div>
+
+              <div class="feedback" data-register-feedback aria-live="polite"></div>
+            </form>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

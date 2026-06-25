@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  TO_REVIEW
+  COMPLETED
+  ON_HOLD
+}
+
+enum TaskActivityAction {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_DESCRIPTION_UPDATED
+  TASK_ASSIGNED
+  TASK_UNASSIGNED
+  ATTACHMENT_UPLOADED
+  ATTACHMENT_DELETED
+  COMMENT_ADDED
+  COMMENT_EDITED
+  COMMENT_DELETED
+  COMMENT_REPLIED
+}
+
+model User {
+  id                  Int              @id @default(autoincrement())
+  name                String
+  email               String           @unique
+  password            String
+  role                UserRole         @default(MEMBER)
+  clients             Client[]         @relation("ClientOwner")
+  assignedTasks       Task[]           @relation("TaskAssignee")
+  timeEntries         TimeEntry[]      @relation("TimeEntryUser")
+  uploadedAttachments TaskAttachment[] @relation("TaskAttachmentUploader")
+  taskComments        TaskComment[]    @relation("TaskCommentAuthor")
+  taskActivities      TaskActivity[]   @relation("TaskActivityActor")
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+}
+
+model Client {
+  id                      Int         @id @default(autoincrement())
+  name                    String      @db.VarChar(120)
+  description             String?     @db.Text
+  monthlyAllowanceMinutes Int         @default(0)
+  billable                Boolean     @default(false)
+  archivedAt              DateTime?
+  userId                  Int
+  user                    User        @relation("ClientOwner", fields: [userId], references: [id], onDelete: Cascade)
+  tasks                   Task[]
+  timeEntries             TimeEntry[] @relation("TimeEntryClient")
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+}
+
+model Task {
+  id              Int              @id @default(autoincrement())
+  title           String           @db.VarChar(191)
+  descriptionHtml String?          @db.LongText
+  priority        TaskPriority     @default(MEDIUM)
+  status          TaskStatus       @default(OPEN)
+  clientId        Int
+  userId          Int
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user            User             @relation("TaskAssignee", fields: [userId], references: [id], onDelete: Restrict)
+  labels          TaskLabel[]
+  attachments     TaskAttachment[]
+  comments        TaskComment[]
+  activities      TaskActivity[]
+  timeEntries     TimeEntry[]      @relation("TimeEntryTask")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([clientId])
+  @@index([userId])
+  @@index([clientId, userId])
+  @@index([status])
+}
+
+model TaskLabel {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(80)
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskAttachment {
+  id             Int      @id @default(autoincrement())
+  taskId         Int
+  uploadedBy     Int
+  fileName       String   @db.VarChar(255)
+  originalName   String   @db.VarChar(255)
+  fileSize       Int
+  mimeType       String   @db.VarChar(191)
+  filePath       String   @db.VarChar(500)
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedByUser User     @relation("TaskAttachmentUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  createdAt      DateTime @default(now())
+
+  @@index([taskId])
+  @@index([uploadedBy])
+}
+
+model TaskComment {
+  id        Int           @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  parentId  Int?
+  content   String        @db.LongText
+  editedAt  DateTime?
+  task      Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User          @relation("TaskCommentAuthor", fields: [userId], references: [id], onDelete: Restrict)
+  parent    TaskComment?  @relation("TaskCommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   TaskComment[] @relation("TaskCommentThread")
+  createdAt DateTime      @default(now())
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model TaskActivity {
+  id         Int                @id @default(autoincrement())
+  taskId     Int
+  userId     Int
+  action     TaskActivityAction
+  entityType String             @db.VarChar(50)
+  entityId   Int?
+  metadata   Json?
+  task       Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User               @relation("TaskActivityActor", fields: [userId], references: [id], onDelete: Restrict)
+  createdAt  DateTime           @default(now())
+
+  @@index([taskId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model TimeEntry {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  taskId          Int
+  clientId        Int
+  startTime       DateTime
+  endTime         DateTime?
+  durationSeconds Int
+  description     String?   @db.Text
+  isManual        Boolean   @default(false)
+  user            User      @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Restrict)
+  task            Task      @relation("TimeEntryTask", fields: [taskId], references: [id], onDelete: Restrict)
+  client          Client    @relation("TimeEntryClient", fields: [clientId], references: [id], onDelete: Restrict)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId, endTime])
+  @@index([userId, startTime])
+  @@index([taskId, startTime])
+  @@index([clientId, startTime])
+}

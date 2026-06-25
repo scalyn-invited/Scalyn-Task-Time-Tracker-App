@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Scalyn Task Time Tracker</title>
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script defer src="/assets/js/app.js"></script>
+  </head>
+  <body data-page="home">
+    <main class="app-shell dashboard-shell">
+      <aside class="sidebar">
+        <a class="brand brand-sidebar" href="/" aria-label="Scalyn home">
+          <span class="brand-mark brand-mark-large" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="img" aria-hidden="true">
+              <defs>
+                <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#48a0ff" />
+                  <stop offset="100%" stop-color="#2b6bff" />
+                </linearGradient>
+              </defs>
+              <path d="M35 14.5A16 16 0 1 0 35 33" fill="none" stroke="url(#brandGradient)" stroke-width="5.5" stroke-linecap="round" />
+              <path d="M31 12l6 2-2 6" fill="none" stroke="url(#brandGradient)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="24" cy="24" r="3.5" fill="#2b6bff" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Scalyn</strong>
+            <span>Task Time Tracker</span>
+          </span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Primary">
+          <a class="sidebar-link active" href="/" aria-current="page">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-6.2H9.5V21H5a1 1 0 0 1-1-1z" />
+              </svg>
+            </span>
+            <span>Dashboard</span>
+          </a>
+          <a class="sidebar-link" href="/timer">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10 2h4M12 6v2m0 0a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 4v4l3 2" />
+              </svg>
+            </span>
+            <span>Timer</span>
+          </a>
+          <a class="sidebar-link" href="/timesheets">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm3 4h8m-8 4h8m-8 4h5" />
+              </svg>
+            </span>
+            <span>Timesheets</span>
+          </a>
+          <a class="sidebar-link" href="/reports">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 20V10m7 10V4m7 16v-8" />
+              </svg>
+            </span>
+            <span>Reports</span>
+          </a>
+          <a class="sidebar-link" href="/clients">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4ZM4 21a6 6 0 0 1 12 0m3-10h3m-1.5-1.5V12.5" />
+              </svg>
+            </span>
+            <span>Clients</span>
+          </a>
+          <a class="sidebar-link" href="/tasks">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 3h10v3H7zm0 6h10m-10 4h10m-10 4h6M5 5h0m0 6h0m0 4h0m0 4h0" />
+              </svg>
+            </span>
+            <span>Tasks</span>
+          </a>
+          <a class="sidebar-link" href="/team">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm7 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM3 20a6 6 0 0 1 12 0m6 0a6 6 0 0 0-4.5-5.8" />
+              </svg>
+            </span>
+            <span>Team</span>
+          </a>
+          <a class="sidebar-link" href="/settings">
+            <span class="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M10.6 3.5h2.8l.5 2a7.3 7.3 0 0 1 1.4.8l2-.6 1.4 2.4-1.5 1.4a7.6 7.6 0 0 1 0 1.6l1.5 1.4-1.4 2.4-2-.6a7.3 7.3 0 0 1-1.4.8l-.5 2h-2.8l-.5-2a7.3 7.3 0 0 1-1.4-.8l-2 .6-1.4-2.4 1.5-1.4a7.6 7.6 0 0 1 0-1.6L5.3 8.1l1.4-2.4 2 .6a7.3 7.3 0 0 1 1.4-.8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
+              </svg>
+            </span>
+            <span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="profile-chip" type="button" aria-label="Open user menu">
+            <span class="avatar avatar-small">JD</span>
+            <span class="profile-chip-copy">
+              <strong>John Doe</strong>
+              <span>john@example.com</span>
+            </span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m7 10 5 5 5-5" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <section class="dashboard-main">
+        <header class="topbar dashboard-topbar">
+          <h1>Dashboard</h1>
+          <div class="topbar-actions">
+            <button class="action-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-7-7h14" /></svg>
+              <span>Invite Member</span>
+            </button>
+
+            <button class="icon-button notification-button" type="button" aria-label="Notifications">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 17H9m8-2V11a5 5 0 1 0-10 0v4l-2 2h14z" /></svg>
+              <span class="badge">3</span>
+            </button>
+
+            <button class="team-switcher" type="button" aria-label="Team selector">
+              <span>Acme Team</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="dashboard-content">
+          <section class="stats-grid" aria-label="Summary stats">
+            <article class="stat-card stat-card-blue">
+              <div class="stat-card-head">TODAY'S TOTAL</div>
+              <div class="stat-card-body">
+                <div>
+                  <strong>04:35:20</strong>
+                  <span>hr:min:sec</span>
+                </div>
+                <svg class="sparkline" viewBox="0 0 140 70" aria-hidden="true">
+                  <path d="M4 56 20 40 34 50 50 30 66 36 82 20 98 24 114 10 136 14" />
+                </svg>
+              </div>
+            </article>
+
+            <article class="stat-card stat-card-green">
+              <div class="stat-card-head">THIS WEEK</div>
+              <div class="stat-card-body">
+                <div>
+                  <strong>21:15:00</strong>
+                  <span>hr:min:sec</span>
+                </div>
+                <div class="mini-bars mini-bars-green" aria-hidden="true">
+                  <span style="height: 38%"></span>
+                  <span style="height: 60%"></span>
+                  <span style="height: 44%"></span>
+                  <span style="height: 72%"></span>
+                  <span style="height: 82%"></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="stat-card stat-card-purple">
+              <div class="stat-card-head">THIS MONTH</div>
+              <div class="stat-card-body">
+                <div>
+                  <strong>96:40:00</strong>
+                  <span>hr:min:sec</span>
+                </div>
+                <div class="mini-bars mini-bars-purple" aria-hidden="true">
+                  <span style="height: 32%"></span>
+                  <span style="height: 58%"></span>
+                  <span style="height: 36%"></span>
+                  <span style="height: 76%"></span>
+                  <span style="height: 50%"></span>
+                </div>
+              </div>
+            </article>
+
+            <article class="stat-card stat-card-orange">
+              <div class="stat-card-head">BILLABLE HOURS</div>
+              <div class="billable-wrap">
+                <div class="billable-copy">
+                  <strong>75%</strong>
+                  <span>of total time</span>
+                </div>
+                <div class="donut" style="--value: 75" aria-hidden="true"></div>
+              </div>
+            </article>
+          </section>
+
+          <section class="active-timer card-panel">
+            <div class="section-header">
+              <h2>ACTIVE TIMER</h2>
+              <span class="status-pill"><span class="status-dot"></span>Running</span>
+            </div>
+            <button class="more-button" type="button" aria-label="More options">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.8" />
+                <circle cx="12" cy="12" r="1.8" />
+                <circle cx="12" cy="19" r="1.8" />
+              </svg>
+            </button>
+
+            <div class="active-timer-body">
+              <button class="play-button" type="button" aria-label="Resume timer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 7.5 17 12l-8 4.5z" />
+                </svg>
+              </button>
+
+              <div class="task-meta">
+                <h3>Website Redesign</h3>
+                <p>Acme Corporation <span class="dot-sep">&middot;</span> <span class="tag">Design</span></p>
+              </div>
+
+              <div class="elapsed-block">
+                <span>ELAPSED TIME</span>
+                <strong>01:25:36</strong>
+              </div>
+
+              <div class="timer-actions">
+                <button class="ghost-action" type="button">Add Note</button>
+                <button class="danger-action" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7z" /></svg>
+                  <span>Stop Timer</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <article class="card-panel list-card">
+              <div class="section-header">
+                <h2>RECENT TIME ENTRIES</h2>
+                <a href="/" class="view-link">View all</a>
+              </div>
+
+              <div class="entry-list">
+                <div class="entry-row active">
+                  <button class="entry-play" type="button" aria-label="Resume entry">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.5 17 12l-8 4.5z" />
+                    </svg>
+                  </button>
+                  <div class="entry-copy">
+                    <strong>Website Redesign</strong>
+                    <span>Acme Corporation <span class="dot-sep">&middot;</span> Design</span>
+                  </div>
+                  <span class="entry-status running">Running</span>
+                  <strong class="entry-time">01:25:36</strong>
+                  <button class="row-more" type="button" aria-label="More entry actions">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.8" />
+                      <circle cx="12" cy="12" r="1.8" />
+                      <circle cx="12" cy="19" r="1.8" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="entry-row">
+                  <button class="entry-play" type="button" aria-label="Resume entry">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.5 17 12l-8 4.5z" />
+                    </svg>
+                  </button>
+                  <div class="entry-copy">
+                    <strong>Mobile App Development</strong>
+                    <span>TechStart Inc. <span class="dot-sep">&middot;</span> Development</span>
+                  </div>
+                  <span class="entry-status muted">Today</span>
+                  <strong class="entry-time">02:45:12</strong>
+                  <button class="row-more" type="button" aria-label="More entry actions">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.8" />
+                      <circle cx="12" cy="12" r="1.8" />
+                      <circle cx="12" cy="19" r="1.8" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="entry-row">
+                  <button class="entry-play" type="button" aria-label="Resume entry">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.5 17 12l-8 4.5z" />
+                    </svg>
+                  </button>
+                  <div class="entry-copy">
+                    <strong>Project Management</strong>
+                    <span>Acme Corporation <span class="dot-sep">&middot;</span> Management</span>
+                  </div>
+                  <span class="entry-status muted">Today</span>
+                  <strong class="entry-time">01:15:00</strong>
+                  <button class="row-more" type="button" aria-label="More entry actions">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.8" />
+                      <circle cx="12" cy="12" r="1.8" />
+                      <circle cx="12" cy="19" r="1.8" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="entry-row">
+                  <button class="entry-play" type="button" aria-label="Resume entry">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.5 17 12l-8 4.5z" />
+                    </svg>
+                  </button>
+                  <div class="entry-copy">
+                    <strong>Logo Design</strong>
+                    <span>Bright Ideas LLC <span class="dot-sep">&middot;</span> Design</span>
+                  </div>
+                  <span class="entry-status muted">Yesterday</span>
+                  <strong class="entry-time">00:50:30</strong>
+                  <button class="row-more" type="button" aria-label="More entry actions">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.8" />
+                      <circle cx="12" cy="12" r="1.8" />
+                      <circle cx="12" cy="19" r="1.8" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="entry-row">
+                  <button class="entry-play" type="button" aria-label="Resume entry">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 7.5 17 12l-8 4.5z" />
+                    </svg>
+                  </button>
+                  <div class="entry-copy">
+                    <strong>Bug Fixing</strong>
+                    <span>TechStart Inc. <span class="dot-sep">&middot;</span> Development</span>
+                  </div>
+                  <span class="entry-status muted">Yesterday</span>
+                  <strong class="entry-time">01:30:15</strong>
+                  <button class="row-more" type="button" aria-label="More entry actions">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1.8" />
+                      <circle cx="12" cy="12" r="1.8" />
+                      <circle cx="12" cy="19" r="1.8" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <a class="wide-link-button" href="/">View all time entries</a>
+            </article>
+
+            <article class="card-panel timesheet-card">
+              <div class="section-header">
+                <h2>THIS WEEK TIMESHEET</h2>
+                <a href="/" class="view-link">View full timesheet</a>
+              </div>
+
+              <div class="timesheet-nav">
+                <button class="nav-arrow" type="button" aria-label="Previous week">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+                </button>
+                <div class="timesheet-range">May 12 - May 18, 2024</div>
+                <button class="nav-arrow" type="button" aria-label="Next week">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+                </button>
+              </div>
+
+              <div class="timesheet-grid">
+                <div class="day-column">
+                  <span>Mon</span>
+                  <strong>12</strong>
+                  <div class="day-total">04:30</div>
+                  <div class="day-bar" style="--height: 68%"></div>
+                </div>
+                <div class="day-column">
+                  <span>Tue</span>
+                  <strong>13</strong>
+                  <div class="day-total">05:15</div>
+                  <div class="day-bar" style="--height: 75%"></div>
+                </div>
+                <div class="day-column">
+                  <span>Wed</span>
+                  <strong>14</strong>
+                  <div class="day-total">06:00</div>
+                  <div class="day-bar" style="--height: 82%"></div>
+                </div>
+                <div class="day-column">
+                  <span>Thu</span>
+                  <strong>15</strong>
+                  <div class="day-total">04:45</div>
+                  <div class="day-bar" style="--height: 72%"></div>
+                </div>
+                <div class="day-column">
+                  <span>Fri</span>
+                  <strong>16</strong>
+                  <div class="day-total">03:45</div>
+                  <div class="day-bar" style="--height: 56%"></div>
+                </div>
+                <div class="day-column muted-day">
+                  <span>Sat</span>
+                  <strong>17</strong>
+                  <div class="day-total">00:00</div>
+                  <div class="day-bar empty"></div>
+                </div>
+                <div class="day-column muted-day">
+                  <span>Sun</span>
+                  <strong>18</strong>
+                  <div class="day-total">00:00</div>
+                  <div class="day-bar empty"></div>
+                </div>
+              </div>
+
+              <div class="timesheet-footer">
+                <div>Total: <strong>24:15:00</strong></div>
+                <div class="budget-block">
+                  <div class="budget-label">
+                    <span>Weekly Budget:</span>
+                    <strong>40:00:00</strong>
+                  </div>
+                  <div class="progress-track" aria-hidden="true">
+                    <div class="progress-fill" style="width: 60%"></div>
+                  </div>
+                  <span class="progress-value">60%</span>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="lower-grid">
+            <article class="card-panel chart-card">
+              <div class="section-header">
+                <h2>TIME DISTRIBUTION</h2>
+                <span></span>
+              </div>
+              <div class="distribution-body">
+                <div class="donut donut-large" style="--value: 45" aria-hidden="true"></div>
+                <div class="legend-list">
+                  <div class="legend-item">
+                    <span class="legend-swatch blue"></span>
+                    <span>Acme Corporation</span>
+                    <strong>45%</strong>
+                    <span class="legend-time">10:45:00</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-swatch dark"></span>
+                    <span>TechStart Inc.</span>
+                    <strong>27%</strong>
+                    <span class="legend-time">06:40:00</span>
+                  </div>
+                  <div class="legend-item">
+                    <span class="legend-swatch green"></span>
+                    <span>Bright Ideas LLC</span>
+                    <strong>18%</strong>
+                    <span class="legend-time">04:20:00</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card-panel clients-card">
+              <div class="section-header">
+                <h2>TOP CLIENTS</h2>
+                <a href="/" class="view-link">View report</a>
+              </div>
+
+              <div class="client-list">
+                <div class="client-row">
+                  <div class="client-name">
+                    <span class="client-icon">Q</span>
+                    <span>Acme Corporation</span>
+                  </div>
+                  <div class="client-bar">
+                    <span style="width: 72%"></span>
+                  </div>
+                  <strong>45%</strong>
+                  <span>27:15:00</span>
+                </div>
+
+                <div class="client-row">
+                  <div class="client-name">
+                    <span class="client-icon">T</span>
+                    <span>TechStart Inc.</span>
+                  </div>
+                  <div class="client-bar">
+                    <span style="width: 54%"></span>
+                  </div>
+                  <strong>31%</strong>
+                  <span>18:20:00</span>
+                </div>
+
+                <div class="client-row">
+                  <div class="client-name">
+                    <span class="client-icon">B</span>
+                    <span>Bright Ideas LLC</span>
+                  </div>
+                  <div class="client-bar">
+                    <span style="width: 38%"></span>
+                  </div>
+                  <strong>24%</strong>
+                  <span>14:05:00</span>
+                </div>
+              </div>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

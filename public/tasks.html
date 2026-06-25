@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tasks | Scalyn Task Time Tracker</title>
+    <link rel="stylesheet" href="/assets/vendor/datatables/css/datatables.min.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script defer src="/assets/vendor/jquery/jquery.min.js"></script>
+    <script defer src="/assets/vendor/datatables/js/datatables.min.js"></script>
+    <script defer src="/assets/js/app.js"></script>
+  </head>
+  <body data-page="tasks">
+    <main class="app-shell dashboard-shell">
+      <aside class="sidebar">
+        <a class="brand brand-sidebar" href="/" aria-label="Scalyn home">
+          <span class="brand-mark brand-mark-large" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="img" aria-hidden="true">
+              <defs>
+                <linearGradient id="brandGradientTasks" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#48a0ff" />
+                  <stop offset="100%" stop-color="#2b6bff" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M35 14.5A16 16 0 1 0 35 33"
+                fill="none"
+                stroke="url(#brandGradientTasks)"
+                stroke-width="5.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M31 12l6 2-2 6"
+                fill="none"
+                stroke="url(#brandGradientTasks)"
+                stroke-width="5.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="24" cy="24" r="3.5" fill="#2b6bff" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>Scalyn</strong>
+            <span>Task Time Tracker</span>
+          </span>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Primary">
+          <a class="sidebar-link" href="/">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-6.2H9.5V21H5a1 1 0 0 1-1-1z" /></svg></span>
+            <span>Dashboard</span>
+          </a>
+          <a class="sidebar-link" href="/timer">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 2h4M12 6v2m0 0a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 4v4l3 2" /></svg></span>
+            <span>Timer</span>
+          </a>
+          <a class="sidebar-link" href="/timesheets">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm3 4h8m-8 4h8m-8 4h5" /></svg></span>
+            <span>Timesheets</span>
+          </a>
+          <a class="sidebar-link" href="/reports">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V10m7 10V4m7 16v-8" /></svg></span>
+            <span>Reports</span>
+          </a>
+          <a class="sidebar-link" href="/clients">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4ZM4 21a6 6 0 0 1 12 0m3-10h3m-1.5-1.5V12.5" /></svg></span>
+            <span>Clients</span>
+          </a>
+          <a class="sidebar-link active" href="/tasks" aria-current="page">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10v3H7zm0 6h10m-10 4h10m-10 4h6M5 5h0m0 6h0m0 4h0m0 4h0" /></svg></span>
+            <span>Tasks</span>
+          </a>
+          <a class="sidebar-link" href="/team">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm7 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM3 20a6 6 0 0 1 12 0m6 0a6 6 0 0 0-4.5-5.8" /></svg></span>
+            <span>Team</span>
+          </a>
+          <a class="sidebar-link" href="/settings">
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10.6 3.5h2.8l.5 2a7.3 7.3 0 0 1 1.4.8l2-.6 1.4 2.4-1.5 1.4a7.6 7.6 0 0 1 0 1.6l1.5 1.4-1.4 2.4-2-.6a7.3 7.3 0 0 1-1.4.8l-.5 2h-2.8l-.5-2a7.3 7.3 0 0 1-1.4-.8l-2 .6-1.4-2.4 1.5-1.4a7.6 7.6 0 0 1 0-1.6L5.3 8.1l1.4-2.4 2 .6a7.3 7.3 0 0 1 1.4-.8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" /></svg></span>
+            <span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="profile-chip" type="button" aria-label="Open user menu">
+            <span class="avatar avatar-small">JD</span>
+            <span class="profile-chip-copy">
+              <strong>John Doe</strong>
+              <span>john@example.com</span>
+            </span>
+            <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m7 10 5 5 5-5" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+
+      <section class="route-main tasks-page">
+        <header class="topbar dashboard-topbar">
+          <div>
+            <h1>Tasks</h1>
+            <p class="tasks-subtitle">Track client work, delegate assignments, and keep labels tidy.</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="action-button" type="button" data-task-create-button>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-7-7h14" /></svg>
+              <span>Create task</span>
+            </button>
+            <button class="team-switcher" type="button" data-task-reset-filters>
+              <span>Reset filters</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <section class="tasks-summary-grid">
+          <article class="stat-card stat-card-blue">
+            <div class="stat-card-head">Total Tasks</div>
+            <div class="stat-card-body">
+              <strong data-task-total>0</strong>
+              <span>Across your active clients</span>
+            </div>
+          </article>
+          <article class="stat-card stat-card-green">
+            <div class="stat-card-head">Open Tasks</div>
+            <div class="stat-card-body">
+              <strong data-task-open>0</strong>
+              <span>Not yet completed</span>
+            </div>
+          </article>
+          <article class="stat-card stat-card-purple">
+            <div class="stat-card-head">Completed</div>
+            <div class="stat-card-body">
+              <strong data-task-completed>0</strong>
+              <span>Finished tasks</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="card-panel tasks-filter-panel">
+          <div class="tasks-filter-grid">
+            <div class="field">
+              <label for="task-client-filter">Filter by client</label>
+              <select id="task-client-filter" data-task-client-filter>
+                <option value="">All clients</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="task-user-filter">Filter by assigned user</label>
+              <select id="task-user-filter" data-task-user-filter>
+                <option value="">All users</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-panel tasks-table-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Task list</h2>
+            </div>
+            <div class="feedback" data-task-feedback aria-live="polite"></div>
+          </div>
+          <div class="table-wrap">
+            <table id="tasks-table" class="display compact" style="width: 100%">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Client</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Labels</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="task-modal" data-task-modal hidden>
+      <div class="task-modal-overlay" data-task-modal-overlay>
+        <section class="task-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
+          <header class="task-modal-header">
+            <div>
+              <p class="route-eyebrow">Task</p>
+              <h2 id="task-modal-title">Create task</h2>
+              <p class="task-modal-subtitle" data-task-modal-subtitle>Assign a task to a client and user, then tag it with labels from the global catalog.</p>
+            </div>
+            <button class="modal-close-button" type="button" data-task-close-button aria-label="Close task modal">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </header>
+
+          <div class="task-modal-body">
+            <form class="task-form" data-task-form>
+              <input type="hidden" name="id" />
+
+              <div class="field">
+                <label for="task-title">Task title</label>
+                <input id="task-title" name="title" type="text" minlength="2" maxlength="191" required />
+              </div>
+
+              <div class="task-form-grid">
+                <div class="field">
+                  <label for="task-client">Client</label>
+                  <select id="task-client" name="clientId" required>
+                    <option value="">Select a client</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="task-user">Assigned user</label>
+                  <select id="task-user" name="userId" required>
+                    <option value="">Select a user</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="task-priority">Priority</label>
+                  <select id="task-priority" name="priority" required>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM" selected>Medium</option>
+                    <option value="HIGH">High</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="task-status">Status</label>
+                  <select id="task-status" name="status" required>
+                    <option value="OPEN" selected>Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="TO_REVIEW">To Review</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="ON_HOLD">On Hold</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Labels</label>
+                <div data-task-label-selector></div>
+                <p class="help" data-task-label-help>Select labels from the global catalog. Manage labels in Settings.</p>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save task</button>
+                <button class="btn btn-secondary" type="button" data-task-cancel-button>Cancel</button>
+              </div>
+
+              <div class="feedback" data-task-form-feedback aria-live="polite"></div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
