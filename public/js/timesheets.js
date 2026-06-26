@@ -26,6 +26,7 @@
       to: '',
     },
     dataTable: null,
+    loadRequestId: 0,
     selectedEntry: null,
     previousFocus: null,
     modals: null,
@@ -210,6 +211,10 @@
 
   function destroyDataTable() {
     if (state.dataTable) {
+      if (typeof state.dataTable.clear === 'function') {
+        state.dataTable.clear();
+      }
+
       state.dataTable.destroy();
       state.dataTable = null;
     }
@@ -244,6 +249,42 @@
 
   function flattenGroups(groups) {
     return groups.flatMap((group) => group.entries);
+  }
+
+  function isWithinSelectedRange(entry) {
+    const startDate = new Date(entry.startTime);
+
+    if (state.filters.from) {
+      const from = new Date(`${state.filters.from}T00:00:00`);
+      if (startDate < from) {
+        return false;
+      }
+    }
+
+    if (state.filters.to) {
+      const to = new Date(`${state.filters.to}T23:59:59.999`);
+      if (startDate > to) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function entryMatchesFilters(entry) {
+    if (state.filters.userId && String(entry.userId) !== state.filters.userId) {
+      return false;
+    }
+
+    if (state.filters.clientId && String(entry.clientId) !== state.filters.clientId) {
+      return false;
+    }
+
+    if (state.filters.taskId && String(entry.taskId) !== state.filters.taskId) {
+      return false;
+    }
+
+    return isWithinSelectedRange(entry);
   }
 
   function getUserName(userId) {
@@ -354,7 +395,25 @@
       return;
     }
 
-    const rows = flattenGroups(state.groups);
+    const rows = flattenGroups(state.groups).filter(entryMatchesFilters);
+    state.rows = rows;
+    destroyDataTable();
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="empty-shell empty-shell-inline">
+              <div>
+                <strong>No time entries found</strong>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
     tbody.innerHTML = rows
       .map(
         (entry) => `
@@ -397,8 +456,6 @@
         `,
       )
       .join('');
-
-    destroyDataTable();
 
     const DataTableClass = window.DataTable;
     if (typeof DataTableClass === 'function') {
@@ -762,6 +819,7 @@
   }
 
   async function loadTimesheet() {
+    const requestId = ++state.loadRequestId;
     const feedback = document.querySelector('[data-timesheet-feedback]');
     const refreshButton = document.querySelector('[data-timesheet-refresh]');
 
@@ -775,11 +833,14 @@
       }
 
       const payload = await request(`/time-entries?${buildQuery()}`);
+      if (requestId !== state.loadRequestId) {
+        return;
+      }
+
       state.view = payload.view || state.view;
       state.groups = Array.isArray(payload.groups) ? payload.groups : [];
       state.totals = payload.totals || { durationSeconds: 0, entryCount: 0 };
       state.range = payload.range || { from: '', to: '', label: '' };
-      state.rows = flattenGroups(state.groups);
 
       renderViewButtons();
       renderSummary();
