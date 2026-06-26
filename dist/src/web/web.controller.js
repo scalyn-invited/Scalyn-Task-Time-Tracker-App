@@ -22,7 +22,7 @@ let WebController = class WebController {
         res.sendFile((0, path_1.join)(this.publicRoot, fileName));
     }
     async index(res) {
-        await this.servePage(res, 'index.html');
+        res.redirect(302, '/timer');
     }
     async login(res) {
         await this.servePage(res, 'login.html');
@@ -54,6 +54,9 @@ let WebController = class WebController {
     }
     async clients(res) {
         await this.servePage(res, 'clients.html');
+    }
+    async users(res) {
+        await this.servePage(res, 'users.html');
     }
     async clientDetails(res) {
         await this.servePage(res, 'clients.html');
@@ -159,6 +162,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], WebController.prototype, "clients", null);
+__decorate([
+    (0, common_1.Get)('users'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WebController.prototype, "users", null);
 __decorate([
     (0, common_1.Get)('clients/:id'),
     (0, common_1.Header)('Cache-Control', 'no-store'),

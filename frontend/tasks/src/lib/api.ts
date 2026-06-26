@@ -117,11 +117,11 @@ export async function uploadTaskAttachments(taskId: number, files: File[]): Prom
 }
 
 export function fetchCurrentUser(): Promise<SafeUser> {
-  return request<SafeUser>('/users/me');
+  return request<SafeUser>('/api/users/me');
 }
 
 export function fetchUsers(): Promise<SafeUser[]> {
-  return request<SafeUser[]>('/users');
+  return request<SafeUser[]>('/api/users');
 }
 
 export function fetchClients(): Promise<Client[]> {

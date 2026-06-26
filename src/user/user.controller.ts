@@ -30,7 +30,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 @UseGuards(JwtAuthGuard)
-@Controller('users')
+@Controller('api/users')
 export class UserController {
   constructor(private readonly userService: UserManagementService) {}
 

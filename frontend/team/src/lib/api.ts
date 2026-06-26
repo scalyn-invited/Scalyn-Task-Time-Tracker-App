@@ -62,7 +62,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 }
 
 export function fetchCurrentUser(): Promise<SafeUser> {
-  return request<SafeUser>('/users/me');
+  return request<SafeUser>('/api/users/me');
 }
 
 export function fetchTeams(): Promise<TeamSummary[]> {
@@ -118,7 +118,7 @@ export function removeTeamMember(teamId: number, memberId: number): Promise<void
 }
 
 export function fetchUsers(): Promise<SafeUser[]> {
-  return request<SafeUser[]>('/users');
+  return request<SafeUser[]>('/api/users');
 }
 
 export function createUser(values: {
@@ -131,41 +131,41 @@ export function createUser(values: {
   teamId?: number;
   teamRole?: Exclude<TeamRole, 'admin'>;
 }): Promise<SafeUser> {
-  return request<SafeUser>('/users', {
+  return request<SafeUser>('/api/users', {
     method: 'POST',
     body: JSON.stringify(values),
   });
 }
 
 export function updateUser(userId: number, values: { name?: string; email?: string; systemRole?: TeamRole }): Promise<SafeUser> {
-  return request<SafeUser>(`/users/${userId}`, {
+  return request<SafeUser>(`/api/users/${userId}`, {
     method: 'PUT',
     body: JSON.stringify(values),
   });
 }
 
 export function updateUserStatus(userId: number, isActive: boolean): Promise<SafeUser> {
-  return request<SafeUser>(`/users/${userId}/status`, {
+  return request<SafeUser>(`/api/users/${userId}/status`, {
     method: 'PUT',
     body: JSON.stringify({ isActive }),
   });
 }
 
 export function deleteUser(userId: number): Promise<SafeUser> {
-  return request<SafeUser>(`/users/${userId}`, {
+  return request<SafeUser>(`/api/users/${userId}`, {
     method: 'DELETE',
   });
 }
 
 export function updateProfile(values: { name?: string; email?: string }): Promise<SafeUser> {
-  return request<SafeUser>('/users/me', {
+  return request<SafeUser>('/api/users/me', {
     method: 'PATCH',
     body: JSON.stringify(values),
   });
 }
 
 export function changePassword(values: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise<void> {
-  return request<void>('/users/me/password', {
+  return request<void>('/api/users/me/password', {
     method: 'PATCH',
     body: JSON.stringify(values),
   });

@@ -145,6 +145,6 @@ __decorate([
 ], UserController.prototype, "deleteUser", null);
 exports.UserController = UserController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Controller)('users'),
+    (0, common_1.Controller)('api/users'),
     __metadata("design:paramtypes", [user_management_service_1.UserManagementService])
 ], UserController);

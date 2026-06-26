@@ -2081,10 +2081,10 @@
     async function loadData() {
       try {
         const [profile, active, archived, allUsers, taskRows, labelRows] = await Promise.all([
-          request('/users/me'),
+          request('/api/users/me'),
           request('/api/clients'),
           request('/api/clients/archived'),
-          request('/users'),
+          request('/api/users'),
           request('/api/tasks'),
           request('/api/task-labels'),
         ]);
@@ -2322,17 +2322,641 @@
     await loadData();
   }
 
+  async function initUsersPage() {
+    const table = document.querySelector('#users-table');
+    const pageFeedback = document.querySelector('[data-user-feedback]');
+    const modal = document.querySelector('[data-user-modal]');
+    const modalOverlay = document.querySelector('[data-user-modal-overlay]');
+    const form = document.querySelector('[data-user-form]');
+    const modalTitle = document.querySelector('#user-modal-title');
+    const modalSubtitle = document.querySelector('[data-user-modal-subtitle]');
+    const openButton = document.querySelector('[data-user-create-button]');
+    const closeButtons = document.querySelectorAll('[data-user-close-button]');
+    const cancelButton = document.querySelector('[data-user-cancel-button]');
+    const formFeedback = document.querySelector('[data-user-form-feedback]');
+    const submitButton = document.querySelector('[data-user-submit-button]');
+    const idInput = document.querySelector('input[name="id"]');
+    const nameInput = document.querySelector('input[name="name"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    const temporaryPasswordInput = document.querySelector('input[name="temporaryPassword"]');
+    const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+    const systemRoleSelect = document.querySelector('select[name="systemRole"]');
+    const assignToTeamInput = document.querySelector('input[name="assignToTeam"]');
+    const teamFields = document.querySelector('[data-user-team-fields]');
+    const teamIdSelect = document.querySelector('select[name="teamId"]');
+    const teamRoleSelect = document.querySelector('select[name="teamRole"]');
+    const createOnlySections = document.querySelectorAll('[data-user-create-only]');
+    const editOnlySections = document.querySelectorAll('[data-user-edit-only]');
+    const totalCount = document.querySelector('[data-user-total]');
+    const activeCount = document.querySelector('[data-user-active]');
+    const adminsCount = document.querySelector('[data-user-admins]');
+
+    if (
+      !table ||
+      !modal ||
+      !form ||
+      !openButton ||
+      closeButtons.length === 0 ||
+      !cancelButton ||
+      !systemRoleSelect ||
+      !teamFields ||
+      !teamIdSelect ||
+      !teamRoleSelect
+    ) {
+      return;
+    }
+
+    const DataTableClass = window.DataTable;
+    if (typeof DataTableClass !== 'function') {
+      setFeedback(pageFeedback, 'User table library failed to load.', 'error');
+      return;
+    }
+
+    let users = [];
+    let teams = [];
+    let dataTable = null;
+    let currentUserId = null;
+    let currentMode = 'create';
+
+    function setPageFeedback(message, tone) {
+      setFeedback(pageFeedback, message, tone);
+    }
+
+    function setFormFeedback(message, tone) {
+      setFeedback(formFeedback, message, tone);
+    }
+
+    function formatDateTime(value) {
+      if (!value) {
+        return '--';
+      }
+
+      return new Date(value).toLocaleString();
+    }
+
+    function formatRole(role) {
+      const value = String(role || 'member').toLowerCase();
+      return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+    }
+
+    function roleClass(role) {
+      switch (String(role || 'member').toLowerCase()) {
+        case 'admin':
+          return 'status-pill-blue';
+        case 'manager':
+          return 'status-pill-purple';
+        default:
+          return 'status-pill-muted';
+      }
+    }
+
+    function statusClass(isActive) {
+      return isActive ? 'status-pill-green' : 'status-pill-red';
+    }
+
+    function initialsFromName(name) {
+      const trimmed = String(name || 'User').trim();
+      if (!trimmed) {
+        return 'U';
+      }
+
+      return trimmed
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+    }
+
+    function findUserById(userId) {
+      return users.find((user) => user.id === userId) || null;
+    }
+
+    function renderTeamOptions() {
+      const currentValue = teamIdSelect.value;
+      teamIdSelect.innerHTML = '<option value="">Select Team</option>';
+
+      teams.forEach((team) => {
+        const option = document.createElement('option');
+        option.value = String(team.id);
+        option.textContent = team.name;
+        teamIdSelect.appendChild(option);
+      });
+
+      if (currentValue) {
+        teamIdSelect.value = currentValue;
+      }
+    }
+
+    function syncTeamAssignmentState() {
+      const createMode = currentMode === 'create';
+      const assignToTeam = Boolean(assignToTeamInput?.checked) && createMode;
+
+      if (teamFields) {
+        teamFields.hidden = !assignToTeam || !createMode;
+      }
+
+      if (teamIdSelect) {
+        teamIdSelect.required = assignToTeam;
+        teamIdSelect.disabled = !assignToTeam;
+        if (!assignToTeam) {
+          teamIdSelect.value = '';
+        }
+      }
+
+      if (teamRoleSelect) {
+        teamRoleSelect.disabled = !assignToTeam;
+      }
+    }
+
+    function syncModeFields() {
+      const createMode = currentMode === 'create';
+
+      createOnlySections.forEach((section) => {
+        section.hidden = !createMode;
+      });
+
+      editOnlySections.forEach((section) => {
+        section.hidden = createMode;
+      });
+
+      if (temporaryPasswordInput) {
+        temporaryPasswordInput.required = createMode;
+        temporaryPasswordInput.disabled = !createMode;
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.required = createMode;
+        confirmPasswordInput.disabled = !createMode;
+      }
+
+      if (submitButton) {
+        submitButton.textContent = createMode ? 'Save user' : 'Update user';
+      }
+
+      if (modalTitle) {
+        modalTitle.textContent = createMode ? 'Add User' : 'Edit User';
+      }
+
+      if (modalSubtitle) {
+        modalSubtitle.textContent = createMode
+          ? 'Create a new account, set the temporary password, and optionally assign it to a team.'
+          : 'Update the user name, email address, and system role.';
+      }
+
+      syncTeamAssignmentState();
+    }
+
+    function fillForm(user) {
+      form.reset();
+      setFormFeedback('', '');
+
+      if (idInput) {
+        idInput.value = user ? String(user.id) : '';
+      }
+
+      if (nameInput) {
+        nameInput.value = user?.name ?? '';
+      }
+
+      if (emailInput) {
+        emailInput.value = user?.email ?? '';
+      }
+
+      if (systemRoleSelect) {
+        systemRoleSelect.value = user?.systemRole ?? 'member';
+      }
+
+      if (assignToTeamInput) {
+        assignToTeamInput.checked = false;
+      }
+
+      if (temporaryPasswordInput) {
+        temporaryPasswordInput.value = '';
+      }
+
+      if (confirmPasswordInput) {
+        confirmPasswordInput.value = '';
+      }
+
+      if (teamRoleSelect) {
+        teamRoleSelect.value = 'member';
+      }
+
+      syncModeFields();
+
+      if (currentMode === 'create' && teams.length === 1 && assignToTeamInput) {
+        assignToTeamInput.checked = true;
+        syncTeamAssignmentState();
+
+        if (teamIdSelect) {
+          teamIdSelect.value = String(teams[0].id);
+        }
+      }
+    }
+
+    function openModal(mode, user = null) {
+      currentMode = mode;
+      currentUserId = user ? user.id : null;
+      fillForm(user);
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+
+      window.requestAnimationFrame(() => {
+        if (nameInput && typeof nameInput.focus === 'function') {
+          nameInput.focus({ preventScroll: true });
+        }
+      });
+    }
+
+    function closeModal() {
+      modal.hidden = true;
+      currentUserId = null;
+      currentMode = 'create';
+      form.reset();
+      setFormFeedback('', '');
+      document.body.classList.remove('modal-open');
+      syncModeFields();
+    }
+
+    function renderStats() {
+      const totalUsers = users.length;
+      const activeUsers = users.filter((user) => user.isActive).length;
+      const adminUsers = users.filter((user) => user.systemRole === 'admin').length;
+
+      if (totalCount) {
+        totalCount.textContent = String(totalUsers);
+      }
+
+      if (activeCount) {
+        activeCount.textContent = String(activeUsers);
+      }
+
+      if (adminsCount) {
+        adminsCount.textContent = String(adminUsers);
+      }
+    }
+
+    function renderTable() {
+      if (dataTable) {
+        dataTable.destroy();
+        dataTable = null;
+      }
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+
+      dataTable = new DataTableClass(table, {
+        data: users,
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        autoWidth: false,
+        order: [[0, 'asc']],
+        deferRender: true,
+        language: {
+          emptyTable: 'No users found.',
+        },
+        columns: [
+          {
+            data: null,
+            render: (_value, type, row) => {
+              if (type !== 'display') {
+                return row.name;
+              }
+
+              return `
+                <button class="client-name-link" type="button" data-user-action="edit" data-user-id="${row.id}">
+                  <span class="client-avatar" aria-hidden="true">${initialsFromName(row.name)}</span>
+                  <span class="client-name-copy">
+                    <strong>${escapeHtml(row.name)}</strong>
+                    <span>${escapeHtml(row.systemRole)}</span>
+                  </span>
+                </button>
+              `;
+            },
+          },
+          {
+            data: 'email',
+            render: (value, type) => (type === 'display' ? escapeHtml(value) : value),
+          },
+          {
+            data: 'systemRole',
+            render: (value, type) => {
+              if (type === 'sort' || type === 'type') {
+                return value;
+              }
+
+              return `<span class="status-pill ${roleClass(value)}">${escapeHtml(formatRole(value))}</span>`;
+            },
+          },
+          {
+            data: 'isActive',
+            render: (value, type) => {
+              if (type === 'sort' || type === 'type') {
+                return value ? 1 : 0;
+              }
+
+              return `<span class="status-pill ${statusClass(Boolean(value))}">${value ? 'Active' : 'Inactive'}</span>`;
+            },
+          },
+          {
+            data: 'createdAt',
+            render: (value, type) => {
+              if (type === 'sort' || type === 'type') {
+                return value ? new Date(value).getTime() : 0;
+              }
+
+              return escapeHtml(formatDateTime(value));
+            },
+          },
+          {
+            data: null,
+            orderable: false,
+            searchable: false,
+            render: (_value, type, row) => {
+              if (type !== 'display') {
+                return '';
+              }
+
+              return `
+                <div class="client-actions">
+                  <button class="client-action client-action-edit" type="button" data-user-action="edit" data-user-id="${row.id}">Edit</button>
+                  <button class="client-action client-action-archive" type="button" data-user-action="delete" data-user-id="${row.id}">Delete</button>
+                </div>
+              `;
+            },
+          },
+        ],
+      });
+    }
+
+    function getPayload() {
+      const formData = new FormData(form);
+      const name = String(formData.get('name') || '').trim();
+      const email = String(formData.get('email') || '').trim();
+      const systemRole = String(formData.get('systemRole') || 'member');
+
+      if (currentMode === 'edit') {
+        return { name, email, systemRole };
+      }
+
+      const assignToTeam = Boolean(formData.get('assignToTeam'));
+      const temporaryPassword = String(formData.get('temporaryPassword') || '');
+      const confirmPassword = String(formData.get('confirmPassword') || '');
+      const teamId = Number.parseInt(String(formData.get('teamId') || ''), 10);
+      const teamRole = String(formData.get('teamRole') || 'member');
+
+      const payload = {
+        name,
+        email,
+        temporaryPassword,
+        confirmPassword,
+        systemRole,
+        assignToTeam,
+      };
+
+      if (assignToTeam && !Number.isNaN(teamId)) {
+        payload.teamId = teamId;
+        payload.teamRole = teamRole;
+      }
+
+      return payload;
+    }
+
+    async function loadData() {
+      try {
+        const profile = await request('/api/users/me');
+
+        if (profile.systemRole !== 'admin') {
+          redirect('/profile');
+          return;
+        }
+
+        const [userRows, teamRows] = await Promise.all([
+          request('/api/users'),
+          request('/teams'),
+        ]);
+
+        users = Array.isArray(userRows) ? userRows : [];
+        teams = Array.isArray(teamRows) ? teamRows : [];
+
+        renderTeamOptions();
+        renderStats();
+        renderTable();
+        setPageFeedback('', '');
+      } catch (error) {
+        if (error.status === 401) {
+          clearToken();
+          redirect('/login');
+          return;
+        }
+
+        setPageFeedback(error.message || 'Unable to load users', 'error');
+      }
+    }
+
+    async function submitForm(event) {
+      event.preventDefault();
+      setFormFeedback('', '');
+
+      if (!form.reportValidity()) {
+        return;
+      }
+
+      const payload = getPayload();
+
+      if (!payload.name || !payload.email) {
+        setFormFeedback('Name and email are required.', 'error');
+        return;
+      }
+
+      if (currentMode === 'create') {
+        if (!payload.temporaryPassword || !payload.confirmPassword) {
+          setFormFeedback('Temporary password and confirmation are required.', 'error');
+          return;
+        }
+
+        if (payload.assignToTeam && !payload.teamId) {
+          setFormFeedback('Select a team before saving.', 'error');
+          return;
+        }
+      }
+
+      setBusy(form, true);
+      try {
+        if (currentMode === 'edit' && currentUserId) {
+          await request(`/api/users/${currentUserId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+          });
+          setPageFeedback('User updated successfully.', 'success');
+        } else {
+          await request('/api/users', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          setPageFeedback('User created successfully.', 'success');
+        }
+
+        closeModal();
+        await loadData();
+      } catch (error) {
+        if (error.status === 401) {
+          clearToken();
+          redirect('/login');
+          return;
+        }
+
+        setFormFeedback(error.message || 'Unable to save user', 'error');
+      } finally {
+        setBusy(form, false);
+      }
+    }
+
+    async function deleteUser(userId) {
+      const user = findUserById(userId);
+      const confirmed = await showConfirmModal({
+        title: 'Delete user',
+        message: `Are you sure you want to delete ${user ? `"${user.name}"` : 'this user'}? This action cannot be undone.`,
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel',
+        destructive: true,
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        await request(`/api/users/${userId}`, {
+          method: 'DELETE',
+        });
+
+        setPageFeedback('User deleted successfully.', 'success');
+        await loadData();
+      } catch (error) {
+        if (error.status === 401) {
+          clearToken();
+          redirect('/login');
+          return;
+        }
+
+        setPageFeedback(error.message || 'Unable to delete user', 'error');
+      }
+    }
+
+    table.addEventListener('click', (event) => {
+      const actionButton = event.target.closest('[data-user-action]');
+      if (!actionButton) {
+        return;
+      }
+
+      const userId = Number.parseInt(actionButton.dataset.userId || '', 10);
+      if (Number.isNaN(userId)) {
+        return;
+      }
+
+      const user = findUserById(userId);
+      const action = actionButton.dataset.userAction;
+
+      if (action === 'edit' && user) {
+        openModal('edit', user);
+      }
+
+      if (action === 'delete') {
+        void deleteUser(userId);
+      }
+    });
+
+    openButton.addEventListener('click', () => {
+      openModal('create', null);
+    });
+
+    closeButtons.forEach((button) => {
+      button.addEventListener('click', closeModal);
+    });
+
+    if (cancelButton) {
+      cancelButton.addEventListener('click', closeModal);
+    }
+
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+          closeModal();
+        }
+      });
+    }
+
+    if (assignToTeamInput) {
+      assignToTeamInput.addEventListener('change', syncTeamAssignmentState);
+    }
+
+    modal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.hidden) {
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    form.addEventListener('submit', submitForm);
+
+    syncModeFields();
+    await loadData();
+  }
+
   async function initAuthenticatedShell() {
     const chips = document.querySelectorAll('.sidebar-footer .profile-chip');
+    const adminNavLinks = document.querySelectorAll('[data-admin-nav-link]');
 
     if (chips.length === 0) {
       return;
     }
 
     try {
-      const profile = await request('/users/me');
+      const profile = await request('/api/users/me');
 
       chips.forEach((chip) => fillProfileChip(chip, profile));
+
+      if (profile.systemRole !== 'admin') {
+        adminNavLinks.forEach((link) => {
+          link.hidden = true;
+        });
+        return;
+      }
+
+      adminNavLinks.forEach((link) => {
+        link.hidden = false;
+      });
+
+      if (adminNavLinks.length === 0) {
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        const reportsLink = sidebarNav?.querySelector('a[href="/reports"]');
+
+        if (sidebarNav && reportsLink && !sidebarNav.querySelector('a[href="/users"]')) {
+          const usersLink = document.createElement('a');
+          usersLink.className = 'sidebar-link';
+          usersLink.setAttribute('href', '/users');
+          usersLink.setAttribute('data-admin-nav-link', '');
+          usersLink.innerHTML = `
+            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0m12 7a7 7 0 0 0-16 0m6-7h4" /></svg></span>
+            <span>Users</span>
+          `;
+          sidebarNav.insertBefore(usersLink, reportsLink);
+        }
+      }
+
+      syncSidebarNavigation();
     } catch (error) {
       if (error.status === 401) {
         clearToken();
@@ -2352,7 +2976,7 @@
     if (!form) return;
 
     try {
-      const profile = await request('/users/me');
+      const profile = await request('/api/users/me');
       populateProfile(profile);
     } catch (error) {
       clearToken();
@@ -2379,7 +3003,7 @@
 
       setBusy(form, true);
       try {
-        const updated = await request('/users/me', {
+        const updated = await request('/api/users/me', {
           method: 'PATCH',
           body: JSON.stringify({ name, email }),
         });
@@ -2495,7 +3119,7 @@
     async function loadSettingsData() {
       try {
         const [profile, labels] = await Promise.all([
-          request('/users/me'),
+          request('/api/users/me'),
           request('/api/task-labels'),
         ]);
 
@@ -2634,6 +3258,7 @@
     if (page === 'register') void initRegisterPage();
     if (page === 'profile') void initProfilePage();
     if (page === 'clients') void initClientPage();
+    if (page === 'users') void initUsersPage();
     if (page === 'tasks') void initTaskPage();
     if (page === 'settings') void initSettingsPage();
   }

@@ -799,7 +799,7 @@
 
   async function loadBootstrapData() {
     const [users, activeClients, archivedClients, tasks] = await Promise.all([
-      request('/users'),
+      request('/api/users'),
       request('/api/clients'),
       request('/api/clients/archived'),
       request('/api/tasks'),

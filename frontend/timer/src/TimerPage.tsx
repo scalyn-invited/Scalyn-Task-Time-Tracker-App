@@ -56,7 +56,7 @@ export function TimerPage() {
     async function loadData() {
       try {
         const [me, clientRows, taskRows] = await Promise.all([
-          request<Profile>('/users/me'),
+          request<Profile>('/api/users/me'),
           request<ClientOption[]>('/api/clients'),
           request<TaskOption[]>('/api/tasks'),
         ]);
@@ -225,14 +225,6 @@ export function TimerPage() {
         </a>
 
         <nav className="sidebar-nav" aria-label="Primary">
-          <a className="sidebar-link" href="/">
-            <span className="icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M4 11.2 12 4l8 7.2V20a1 1 0 0 1-1 1h-4.5v-6.2H9.5V21H5a1 1 0 0 1-1-1z" />
-              </svg>
-            </span>
-            <span>Dashboard</span>
-          </a>
           <a className="sidebar-link active" href="/timer" aria-current="page">
             <span className="icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -240,6 +232,14 @@ export function TimerPage() {
               </svg>
             </span>
             <span>Timer</span>
+          </a>
+          <a className="sidebar-link" href="/tasks">
+            <span className="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 3h10v3H7zm0 6h10m-10 4h10m-10 4h6M5 5h0m0 6h0m0 4h0m0 4h0" />
+              </svg>
+            </span>
+            <span>Task</span>
           </a>
           <a className="sidebar-link" href="/timesheets">
             <span className="icon-wrap" aria-hidden="true">
@@ -249,14 +249,6 @@ export function TimerPage() {
             </span>
             <span>Timesheets</span>
           </a>
-          <a className="sidebar-link" href="/reports">
-            <span className="icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M5 20V10m7 10V4m7 16v-8" />
-              </svg>
-            </span>
-            <span>Reports</span>
-          </a>
           <a className="sidebar-link" href="/clients">
             <span className="icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -264,14 +256,6 @@ export function TimerPage() {
               </svg>
             </span>
             <span>Clients</span>
-          </a>
-          <a className="sidebar-link" href="/tasks">
-            <span className="icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="M7 3h10v3H7zm0 6h10m-10 4h10m-10 4h6M5 5h0m0 6h0m0 4h0m0 4h0" />
-              </svg>
-            </span>
-            <span>Tasks</span>
           </a>
           <a className="sidebar-link" href="/team">
             <span className="icon-wrap" aria-hidden="true">
@@ -281,13 +265,21 @@ export function TimerPage() {
             </span>
             <span>Team</span>
           </a>
+          <a className="sidebar-link" href="/reports">
+            <span className="icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 20V10m7 10V4m7 16v-8" />
+              </svg>
+            </span>
+            <span>Reports</span>
+          </a>
           <a className="sidebar-link" href="/settings">
             <span className="icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 24 24">
                 <path d="M10.6 3.5h2.8l.5 2a7.3 7.3 0 0 1 1.4.8l2-.6 1.4 2.4-1.5 1.4a7.6 7.6 0 0 1 0 1.6l1.5 1.4-1.4 2.4-2-.6a7.3 7.3 0 0 1-1.4.8l-.5 2h-2.8l-.5-2a7.3 7.3 0 0 1-1.4-.8l-2 .6-1.4-2.4 1.5-1.4a7.6 7.6 0 0 1 0-1.6L5.3 8.1l1.4-2.4 2 .6a7.3 7.3 0 0 1 1.4-.8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
               </svg>
             </span>
-            <span>Settings</span>
+            <span>Setting</span>
           </a>
         </nav>
 

@@ -15,7 +15,6 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',
-      '/users': 'http://localhost:3000',
       '/timer': 'http://localhost:3000',
       '/reports': 'http://localhost:3000',
     },

@@ -14,7 +14,7 @@ export class WebController {
   @Get()
   @Header('Cache-Control', 'no-store')
   async index(@Res() res: Response): Promise<void> {
-    await this.servePage(res, 'index.html');
+    res.redirect(302, '/timer');
   }
 
   @Get('login')
@@ -71,6 +71,12 @@ export class WebController {
   @Header('Cache-Control', 'no-store')
   async clients(@Res() res: Response): Promise<void> {
     await this.servePage(res, 'clients.html');
+  }
+
+  @Get('users')
+  @Header('Cache-Control', 'no-store')
+  async users(@Res() res: Response): Promise<void> {
+    await this.servePage(res, 'users.html');
   }
 
   @Get('clients/:id')
