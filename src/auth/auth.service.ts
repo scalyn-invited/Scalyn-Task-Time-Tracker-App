@@ -10,7 +10,7 @@ import type { User } from '../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { AuthResponse, SafeUser } from './types/auth.types';
+import { AuthResponse, SafeUser, SystemRole } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -64,6 +64,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
     const passwordMatches = await bcrypt.compare(dto.password, user.password);
 
     if (!passwordMatches) {
@@ -93,9 +97,17 @@ export class AuthService {
   }
 
   private toSafeUser(user: User): SafeUser {
-    const { password: _password, ...safeUser } = user;
+    const { password: _password, systemRole, ...safeUser } = user;
     void _password;
-    return safeUser;
+    return {
+      ...safeUser,
+      systemRole: this.toSystemRole(systemRole),
+      role: systemRole,
+    };
+  }
+
+  private toSystemRole(role: User['systemRole']): SystemRole {
+    return role.toLowerCase() as SystemRole;
   }
 
   private isUniqueConstraintError(error: unknown): boolean {

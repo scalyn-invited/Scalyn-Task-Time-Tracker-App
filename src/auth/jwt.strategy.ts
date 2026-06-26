@@ -5,7 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { Request } from 'express';
 import type { User } from '../generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtPayload, SafeUser } from './types/auth.types';
+import { JwtPayload, SafeUser, SystemRole } from './types/auth.types';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -41,7 +41,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: true,
         name: true,
         email: true,
-        role: true,
+        systemRole: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -51,19 +52,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token');
     }
 
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is inactive');
+    }
+
     return this.toSafeUser(user);
   }
 
   private toSafeUser(
-    user: Pick<User, 'id' | 'name' | 'email' | 'role' | 'createdAt' | 'updatedAt'>,
+    user: Pick<User, 'id' | 'name' | 'email' | 'systemRole' | 'isActive' | 'createdAt' | 'updatedAt'>,
   ): SafeUser {
     return {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      systemRole: this.toSystemRole(user.systemRole),
+      role: user.systemRole,
+      isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
+  }
+
+  private toSystemRole(role: User['systemRole']): SystemRole {
+    return role.toLowerCase() as SystemRole;
   }
 }

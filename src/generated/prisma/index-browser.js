@@ -127,9 +127,27 @@ exports.Prisma.UserScalarFieldEnum = {
   name: 'name',
   email: 'email',
   password: 'password',
-  role: 'role',
+  systemRole: 'systemRole',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TeamScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TeamMemberScalarFieldEnum = {
+  id: 'id',
+  teamId: 'teamId',
+  userId: 'userId',
+  role: 'role',
+  joinedAt: 'joinedAt'
 };
 
 exports.Prisma.ClientScalarFieldEnum = {
@@ -279,6 +297,8 @@ exports.TimeEntryStatus = exports.$Enums.TimeEntryStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Team: 'Team',
+  TeamMember: 'TeamMember',
   Client: 'Client',
   Task: 'Task',
   TaskLabel: 'TaskLabel',

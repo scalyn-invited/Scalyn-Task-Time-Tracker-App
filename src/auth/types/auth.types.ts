@@ -1,6 +1,18 @@
-import type { User } from '../../generated/prisma';
+import type { User, UserRole } from '../../generated/prisma';
 
-export type SafeUser = Omit<User, 'password'>;
+export type SystemRole = Lowercase<UserRole>;
+
+export interface SafeUser {
+  id: number;
+  name: string;
+  email: string;
+  password?: never;
+  systemRole: SystemRole;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface JwtPayload {
   sub: number | string;

@@ -92,6 +92,9 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
+        if (!user.isActive) {
+            throw new common_1.UnauthorizedException('Account is inactive');
+        }
         const passwordMatches = await bcrypt.compare(dto.password, user.password);
         if (!passwordMatches) {
             throw new common_1.UnauthorizedException('Invalid email or password');
@@ -114,9 +117,16 @@ let AuthService = class AuthService {
         return saltRounds;
     }
     toSafeUser(user) {
-        const { password: _password, ...safeUser } = user;
+        const { password: _password, systemRole, ...safeUser } = user;
         void _password;
-        return safeUser;
+        return {
+            ...safeUser,
+            systemRole: this.toSystemRole(systemRole),
+            role: systemRole,
+        };
+    }
+    toSystemRole(role) {
+        return role.toLowerCase();
     }
     isUniqueConstraintError(error) {
         return (typeof error === 'object' &&

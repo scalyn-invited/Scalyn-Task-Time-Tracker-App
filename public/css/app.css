@@ -205,6 +205,7 @@ button {
 .sidebar-footer {
   margin-top: auto;
   padding-top: 20px;
+  position: relative;
 }
 
 .profile-chip {
@@ -220,11 +221,41 @@ button {
   box-shadow: var(--shadow);
   color: inherit;
   text-align: left;
+  position: relative;
 }
 
 .profile-chip.active {
   border-color: rgba(47, 124, 246, 0.22);
   background: linear-gradient(90deg, rgba(47, 124, 246, 0.12), rgba(47, 124, 246, 0.05));
+}
+
+.profile-chip-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  min-width: 176px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-strong);
+  z-index: 12;
+}
+
+.profile-chip-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.profile-chip-menu-item:hover,
+.profile-chip-menu-item:focus-visible {
+  background: rgba(47, 124, 246, 0.08);
+  color: var(--blue);
 }
 
 .profile-chip-copy {

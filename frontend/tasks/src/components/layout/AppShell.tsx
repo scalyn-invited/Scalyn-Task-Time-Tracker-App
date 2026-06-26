@@ -1,4 +1,3 @@
-import { NavLink } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { fetchCurrentUser } from '../../lib/api';
 import type { SafeUser } from '../../types';
@@ -20,6 +19,22 @@ const NAV_ITEMS = [
 
 export function AppShell({ children }: AppShellProps) {
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
+  const isTeamRoute = window.location.pathname === '/team' || window.location.pathname.startsWith('/team/');
+  const profileHref = isTeamRoute ? '/team/profile' : '/profile';
+
+  const isSidebarActive = (href: string): boolean => {
+    const pathname = window.location.pathname;
+
+    if (href === '/team') {
+      return isTeamRoute;
+    }
+
+    if (href === '/tasks') {
+      return pathname === '/tasks' || pathname.startsWith('/tasks/');
+    }
+
+    return pathname === href;
+  };
 
   useEffect(() => {
     void fetchCurrentUser()
@@ -67,36 +82,22 @@ export function AppShell({ children }: AppShellProps) {
 
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {NAV_ITEMS.map((item) => (
-            item.href === '/tasks' ? (
-              <NavLink
-                key={item.href}
-                className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
-                to={item.href}
-              >
-                <span className="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24">{item.icon}</svg></span>
-                <span>{item.label}</span>
-              </NavLink>
-            ) : (
-              <a key={item.href} className={`sidebar-link${window.location.pathname === item.href ? ' active' : ''}`} href={item.href}>
-                <span className="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24">{item.icon}</svg></span>
-                <span>{item.label}</span>
-              </a>
-            )
+            <a key={item.href} className={`sidebar-link${isSidebarActive(item.href) ? ' active' : ''}`} href={item.href}>
+              <span className="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24">{item.icon}</svg></span>
+              <span>{item.label}</span>
+            </a>
           ))}
         </nav>
 
         {currentUser ? (
           <div className="sidebar-footer">
-            <button className="profile-chip" type="button" aria-label="Open user menu">
+            <a className="profile-chip" href={profileHref} aria-label="Open your profile">
               <span className="avatar avatar-small">{currentUser.name.split(/\s+/).map((part) => part[0] || '').slice(0, 2).join('').toUpperCase()}</span>
               <span className="profile-chip-copy">
                 <strong>{currentUser.name}</strong>
                 <span>{currentUser.email}</span>
               </span>
-              <svg className="chevron" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m7 10 5 5 5-5" />
-              </svg>
-            </button>
+            </a>
           </div>
         ) : null}
       </aside>

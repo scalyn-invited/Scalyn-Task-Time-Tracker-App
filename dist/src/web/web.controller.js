@@ -75,6 +75,19 @@ let WebController = class WebController {
         await this.servePage(res, 'tasks.html');
     }
     async team(res) {
+        const reactTeamIndex = (0, path_1.join)(this.publicRoot, 'team-app', 'index.html');
+        if ((0, fs_1.existsSync)(reactTeamIndex)) {
+            res.sendFile(reactTeamIndex);
+            return;
+        }
+        await this.servePage(res, 'team.html');
+    }
+    async teamDeepLink(res) {
+        const reactTeamIndex = (0, path_1.join)(this.publicRoot, 'team-app', 'index.html');
+        if ((0, fs_1.existsSync)(reactTeamIndex)) {
+            res.sendFile(reactTeamIndex);
+            return;
+        }
         await this.servePage(res, 'team.html');
     }
     async settings(res) {
@@ -178,6 +191,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], WebController.prototype, "team", null);
+__decorate([
+    (0, common_1.Get)('team/*'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WebController.prototype, "teamDeepLink", null);
 __decorate([
     (0, common_1.Get)('settings'),
     (0, common_1.Header)('Cache-Control', 'no-store'),

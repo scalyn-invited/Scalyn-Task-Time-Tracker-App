@@ -1,9 +1,29 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SystemRoles } from '../auth/decorators/system-roles.decorator';
+import { SystemRolesGuard } from '../auth/guards/system-roles.guard';
 import { SafeUser } from '../auth/types/auth.types';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserService } from './user.service';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UserManagementService } from './user-management.service';
 
 interface AuthenticatedRequest extends Request {
   user: SafeUser;
@@ -12,7 +32,7 @@ interface AuthenticatedRequest extends Request {
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserManagementService) {}
 
   @Get('me')
   async getCurrentUser(@Req() req: AuthenticatedRequest): Promise<SafeUser> {
@@ -27,9 +47,72 @@ export class UserController {
     return this.userService.updateProfile(req.user.id, dto);
   }
 
+  @Patch('me/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<void> {
+    await this.userService.changePassword(req.user.id, dto);
+  }
+
   @Get()
-  async listUsers(): Promise<SafeUser[]> {
-    // TODO: Restrict this route to admins once role-based access control is added.
-    return this.userService.listUsers();
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin', 'manager')
+  async listUsers(@Req() req: AuthenticatedRequest): Promise<SafeUser[]> {
+    return this.userService.listUsers(req.user);
+  }
+
+  @Get(':id')
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin', 'manager')
+  async getUser(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<SafeUser> {
+    return this.userService.getUser(req.user, id);
+  }
+
+  @Post()
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin')
+  async createUser(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateUserDto,
+  ): Promise<SafeUser> {
+    return this.userService.createUser(req.user, dto);
+  }
+
+  @Put(':id')
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin')
+  async updateUser(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserAdminDto,
+  ): Promise<SafeUser> {
+    return this.userService.updateUser(req.user, id, dto);
+  }
+
+  @Put(':id/status')
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin')
+  async updateStatus(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserStatusDto,
+  ): Promise<SafeUser> {
+    return this.userService.updateStatus(req.user, id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin')
+  @HttpCode(HttpStatus.OK)
+  async deleteUser(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<SafeUser> {
+    return this.userService.deleteUser(req.user, id);
   }
 }

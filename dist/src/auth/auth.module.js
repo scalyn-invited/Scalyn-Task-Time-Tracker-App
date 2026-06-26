@@ -14,6 +14,7 @@ const passport_1 = require("@nestjs/passport");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const jwt_strategy_1 = require("./jwt.strategy");
+const system_roles_guard_1 = require("./guards/system-roles.guard");
 const prisma_module_1 = require("../prisma/prisma.module");
 let AuthModule = class AuthModule {
 };
@@ -35,7 +36,7 @@ exports.AuthModule = AuthModule = __decorate([
             }),
         ],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
-        exports: [auth_service_1.AuthService, jwt_1.JwtModule, passport_1.PassportModule],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, system_roles_guard_1.SystemRolesGuard],
+        exports: [auth_service_1.AuthService, jwt_1.JwtModule, passport_1.PassportModule, system_roles_guard_1.SystemRolesGuard],
     })
 ], AuthModule);

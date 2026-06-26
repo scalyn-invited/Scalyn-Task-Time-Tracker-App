@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -37,13 +37,15 @@ async function main(): Promise<void> {
       update: {
         name: user.name,
         password: passwordHash,
-        role: user.role,
+        systemRole: user.role,
+        isActive: true,
       },
       create: {
         name: user.name,
         email: user.email,
         password: passwordHash,
-        role: user.role,
+        systemRole: user.role,
+        isActive: true,
       },
     });
   }

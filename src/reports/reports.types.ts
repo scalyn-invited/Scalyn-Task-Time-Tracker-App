@@ -55,7 +55,7 @@ export interface ReportFilters {
 export type ReportEntryWithRelations = TimeEntry & {
   client: Pick<Client, 'id' | 'name' | 'billable'>;
   task: Pick<Task, 'id' | 'title'>;
-  user: Pick<User, 'id' | 'name' | 'email' | 'role'>;
+  user: Pick<User, 'id' | 'name' | 'email' | 'systemRole'>;
 };
 
 export interface ReportTableRow {

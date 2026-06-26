@@ -33,9 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../src/generated/prisma");
 const bcrypt = __importStar(require("bcrypt"));
-const prisma = new client_1.PrismaClient();
+const prisma = new prisma_1.PrismaClient();
 const demoUsers = [
     {
         name: 'Admin User',
@@ -62,13 +62,15 @@ async function main() {
             update: {
                 name: user.name,
                 password: passwordHash,
-                role: user.role,
+                systemRole: user.role,
+                isActive: true,
             },
             create: {
                 name: user.name,
                 email: user.email,
                 password: passwordHash,
-                role: user.role,
+                systemRole: user.role,
+                isActive: true,
             },
         });
     }

@@ -53,19 +53,50 @@ enum TimeEntryStatus {
 }
 
 model User {
-  id            Int        @id @default(autoincrement())
-  name          String
-  email         String     @unique
-  password      String
-  role          UserRole   @default(MEMBER)
-  clients       Client[]   @relation("ClientOwner")
-  assignedTasks Task[]     @relation("TaskAssignee")
-  timeEntries   TimeEntry[] @relation("TimeEntryUser")
+  id                  Int             @id @default(autoincrement())
+  name                String
+  email               String          @unique
+  password            String
+  systemRole          UserRole        @default(MEMBER)
+  isActive            Boolean         @default(true)
+  clients             Client[]        @relation("ClientOwner")
+  assignedTasks       Task[]          @relation("TaskAssignee")
+  timeEntries         TimeEntry[]      @relation("TimeEntryUser")
   uploadedAttachments TaskAttachment[] @relation("TaskAttachmentUploader")
-  taskComments  TaskComment[] @relation("TaskCommentAuthor")
-  taskActivities TaskActivity[] @relation("TaskActivityActor")
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  taskComments        TaskComment[]    @relation("TaskCommentAuthor")
+  taskActivities      TaskActivity[]   @relation("TaskActivityActor")
+  createdTeams        Team[]          @relation("TeamCreatedBy")
+  teamMemberships     TeamMember[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+}
+
+model Team {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(120)
+  description String?      @db.Text
+  createdById Int
+  createdBy   User         @relation("TeamCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  members     TeamMember[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([name])
+  @@index([createdById])
+}
+
+model TeamMember {
+  id        Int       @id @default(autoincrement())
+  teamId    Int
+  userId    Int
+  role      UserRole
+  joinedAt  DateTime  @default(now())
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
 }
 
 model Client {

@@ -108,6 +108,26 @@ export class WebController {
   @Get('team')
   @Header('Cache-Control', 'no-store')
   async team(@Res() res: Response): Promise<void> {
+    const reactTeamIndex = join(this.publicRoot, 'team-app', 'index.html');
+
+    if (existsSync(reactTeamIndex)) {
+      res.sendFile(reactTeamIndex);
+      return;
+    }
+
+    await this.servePage(res, 'team.html');
+  }
+
+  @Get('team/*')
+  @Header('Cache-Control', 'no-store')
+  async teamDeepLink(@Res() res: Response): Promise<void> {
+    const reactTeamIndex = join(this.publicRoot, 'team-app', 'index.html');
+
+    if (existsSync(reactTeamIndex)) {
+      res.sendFile(reactTeamIndex);
+      return;
+    }
+
     await this.servePage(res, 'team.html');
   }
 

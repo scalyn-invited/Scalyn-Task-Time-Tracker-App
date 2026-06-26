@@ -46,13 +46,17 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 id: true,
                 name: true,
                 email: true,
-                role: true,
+                systemRole: true,
+                isActive: true,
                 createdAt: true,
                 updatedAt: true,
             },
         });
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid token');
+        }
+        if (!user.isActive) {
+            throw new common_1.UnauthorizedException('Account is inactive');
         }
         return this.toSafeUser(user);
     }
@@ -61,10 +65,15 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             id: user.id,
             name: user.name,
             email: user.email,
-            role: user.role,
+            systemRole: this.toSystemRole(user.systemRole),
+            role: user.systemRole,
+            isActive: user.isActive,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
+    }
+    toSystemRole(role) {
+        return role.toLowerCase();
     }
 };
 exports.JwtStrategy = JwtStrategy;
