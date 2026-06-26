@@ -18,6 +18,7 @@ const web_module_1 = require("./web/web.module");
 const task_module_1 = require("./task/task.module");
 const time_tracking_module_1 = require("./time-tracking/time-tracking.module");
 const timesheet_module_1 = require("./timesheet/timesheet.module");
+const reports_module_1 = require("./reports/reports.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -37,6 +38,7 @@ exports.AppModule = AppModule = __decorate([
             task_module_1.TaskModule,
             time_tracking_module_1.TimeTrackingModule,
             timesheet_module_1.TimesheetModule,
+            reports_module_1.ReportsModule,
             web_module_1.WebModule,
         ],
     })

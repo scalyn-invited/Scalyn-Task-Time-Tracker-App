@@ -57,6 +57,13 @@ export class WebController {
   @Get('reports')
   @Header('Cache-Control', 'no-store')
   async reports(@Res() res: Response): Promise<void> {
+    const reactReportsIndex = join(this.publicRoot, 'reports-app', 'index.html');
+
+    if (existsSync(reactReportsIndex)) {
+      res.sendFile(reactReportsIndex);
+      return;
+    }
+
     await this.servePage(res, 'reports.html');
   }
 

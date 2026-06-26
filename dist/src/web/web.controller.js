@@ -45,6 +45,11 @@ let WebController = class WebController {
         await this.servePage(res, 'timesheets.html');
     }
     async reports(res) {
+        const reactReportsIndex = (0, path_1.join)(this.publicRoot, 'reports-app', 'index.html');
+        if ((0, fs_1.existsSync)(reactReportsIndex)) {
+            res.sendFile(reactReportsIndex);
+            return;
+        }
         await this.servePage(res, 'reports.html');
     }
     async clients(res) {

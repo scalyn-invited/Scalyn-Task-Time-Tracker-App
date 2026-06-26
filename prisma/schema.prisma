@@ -193,4 +193,5 @@ model TimeEntry {
   @@index([userId, startTime])
   @@index([taskId, startTime])
   @@index([clientId, startTime])
+  @@index([startTime])
 }

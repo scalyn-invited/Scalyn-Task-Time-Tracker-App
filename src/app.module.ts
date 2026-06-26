@@ -9,6 +9,7 @@ import { WebModule } from './web/web.module';
 import { TaskModule } from './task/task.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TimesheetModule } from './timesheet/timesheet.module';
     TaskModule,
     TimeTrackingModule,
     TimesheetModule,
+    ReportsModule,
     WebModule,
   ],
 })
