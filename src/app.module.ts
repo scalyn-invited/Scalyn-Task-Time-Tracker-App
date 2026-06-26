@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { WebModule } from './web/web.module';
 import { TaskModule } from './task/task.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
+import { TimesheetModule } from './timesheet/timesheet.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
     ClientModule,
     TaskModule,
     TimeTrackingModule,
+    TimesheetModule,
     WebModule,
   ],
 })

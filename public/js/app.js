@@ -144,84 +144,38 @@
     submitButton.textContent = busy ? 'Please wait...' : submitButton.dataset.originalLabel;
   }
 
-  function ensureConfirmModal() {
-    if (confirmModalState) {
-      return confirmModalState;
-    }
-
+  function createModalShell({
+    rootClassName,
+    surfaceClassName,
+    panelClassName,
+    titleId,
+    descriptionId,
+    bodyClassName = 'modal-open',
+    onClose,
+  }) {
     const modal = document.createElement('div');
-    modal.className = 'confirm-modal';
+    modal.className = rootClassName;
     modal.hidden = true;
     modal.innerHTML = `
-      <div class="confirm-modal-overlay" data-confirm-modal-overlay>
-        <section class="confirm-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
-          <header class="confirm-modal-header">
-            <div>
-              <p class="route-eyebrow">Confirm action</p>
-              <h2 id="confirm-modal-title" data-confirm-modal-title>Confirm</h2>
-            </div>
-            <button class="modal-close-button confirm-modal-close" type="button" data-confirm-modal-close aria-label="Close confirmation dialog">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </header>
-          <div class="confirm-modal-body">
-            <p id="confirm-modal-message" class="confirm-modal-message" data-confirm-modal-message></p>
-            <div class="form-actions confirm-modal-actions">
-              <button class="btn btn-secondary confirm-modal-cancel" type="button" data-confirm-modal-cancel>Cancel</button>
-              <button class="btn btn-primary confirm-modal-confirm" type="button" data-confirm-modal-confirm>Confirm</button>
-            </div>
-          </div>
+      ${surfaceClassName ? `<div class="${surfaceClassName}" data-modal-surface>` : ''}
+        <section class="${panelClassName}" role="dialog" aria-modal="true" aria-labelledby="${titleId}"${descriptionId ? ` aria-describedby="${descriptionId}"` : ''} data-modal-panel>
+          <div data-modal-content></div>
         </section>
-      </div>
+      ${surfaceClassName ? '</div>' : ''}
     `;
 
-    document.body.appendChild(modal);
+    const surface = modal.querySelector('[data-modal-surface]') || modal;
+    const panel = modal.querySelector('[data-modal-panel]');
+    const content = modal.querySelector('[data-modal-content]');
 
-    const overlay = modal.querySelector('[data-confirm-modal-overlay]');
-    const title = modal.querySelector('[data-confirm-modal-title]');
-    const message = modal.querySelector('[data-confirm-modal-message]');
-    const closeButton = modal.querySelector('[data-confirm-modal-close]');
-    const cancelButton = modal.querySelector('[data-confirm-modal-cancel]');
-    const confirmButton = modal.querySelector('[data-confirm-modal-confirm]');
-
-    const state = {
-      modal,
-      overlay,
-      title,
-      message,
-      closeButton,
-      cancelButton,
-      confirmButton,
-      resolver: null,
-      previousFocus: null,
-      focusConfirm: false,
-    };
-
-    function closeConfirmModal(confirmed) {
-      if (!state.resolver) {
-        return;
-      }
-
-      const resolve = state.resolver;
-      const previousFocus = state.previousFocus;
-      state.resolver = null;
-      state.previousFocus = null;
-      state.focusConfirm = false;
-      state.modal.hidden = true;
-      document.body.classList.remove('confirm-modal-open');
-      resolve(confirmed);
-
-      if (previousFocus && typeof previousFocus.focus === 'function') {
-        previousFocus.focus({ preventScroll: true });
-      }
-    }
+    let previousFocus = null;
 
     function trapFocus(event) {
       if (event.key !== 'Tab') {
         return;
       }
 
-      const focusable = state.modal.querySelectorAll(
+      const focusable = modal.querySelectorAll(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       );
       const focusableItems = Array.from(focusable).filter((element) => element.offsetParent !== null);
@@ -246,37 +200,165 @@
       }
     }
 
-    overlay.addEventListener('click', (event) => {
-      if (event.target === overlay) {
-        closeConfirmModal(false);
+    function closeModal() {
+      modal.hidden = true;
+      document.body.classList.remove(bodyClassName);
+      document.body.classList.remove('confirm-modal-open');
+
+      if (typeof onClose === 'function') {
+        onClose();
       }
-    });
 
-    closeButton.addEventListener('click', () => {
-      closeConfirmModal(false);
-    });
+      if (previousFocus && typeof previousFocus.focus === 'function') {
+        previousFocus.focus({ preventScroll: true });
+      }
 
-    cancelButton.addEventListener('click', () => {
-      closeConfirmModal(false);
-    });
+      previousFocus = null;
+    }
 
-    confirmButton.addEventListener('click', () => {
-      closeConfirmModal(true);
+    function openModal(focusSelector) {
+      previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      modal.hidden = false;
+      document.body.classList.add(bodyClassName);
+      document.body.classList.add('confirm-modal-open');
+
+      window.requestAnimationFrame(() => {
+        if (focusSelector) {
+          const focusTarget = modal.querySelector(focusSelector);
+          if (focusTarget && typeof focusTarget.focus === 'function') {
+            focusTarget.focus({ preventScroll: true });
+            return;
+          }
+        }
+
+        const autoFocusTarget = modal.querySelector('[data-autofocus], [autofocus], [data-modal-default-focus]');
+        if (autoFocusTarget && typeof autoFocusTarget.focus === 'function') {
+          autoFocusTarget.focus({ preventScroll: true });
+          return;
+        }
+
+        const firstFocusable = modal.querySelector('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (firstFocusable && typeof firstFocusable.focus === 'function') {
+          firstFocusable.focus({ preventScroll: true });
+        }
+      });
+    }
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === surface || event.target === modal) {
+        closeModal();
+      }
     });
 
     modal.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        closeConfirmModal(false);
+        closeModal();
         return;
       }
 
       trapFocus(event);
     });
 
-    confirmModalState = state;
-    confirmModalState.closeConfirmModal = closeConfirmModal;
+    document.body.appendChild(modal);
 
+    return {
+      modal,
+      surface,
+      panel,
+      content,
+      openModal,
+      closeModal,
+      setTitle(title) {
+        const titleNode = modal.querySelector('[data-modal-title]');
+        if (titleNode) {
+          titleNode.textContent = title;
+        }
+      },
+      setDescription(description) {
+        const descriptionNode = modal.querySelector('[data-modal-description]');
+        if (descriptionNode) {
+          descriptionNode.textContent = description;
+        }
+      },
+      setBodyHtml(html) {
+        if (content) {
+          content.innerHTML = html;
+        }
+      },
+    };
+  }
+
+  window.STTTModal = {
+    createModalShell,
+  };
+
+  function ensureConfirmModal() {
+    if (confirmModalState) {
+      return confirmModalState;
+    }
+
+    const state = createModalShell({
+      rootClassName: 'confirm-modal',
+      surfaceClassName: 'confirm-modal-overlay',
+      panelClassName: 'confirm-modal-dialog',
+      titleId: 'confirm-modal-title',
+      descriptionId: 'confirm-modal-message',
+      bodyClassName: 'confirm-modal-open',
+      onClose: () => {
+        if (state.resolver) {
+          const resolve = state.resolver;
+          state.resolver = null;
+          resolve(false);
+        }
+      },
+    });
+
+    state.setBodyHtml(`
+      <header class="confirm-modal-header">
+        <div>
+          <p class="confirm-modal-eyebrow">Confirm action</p>
+          <h2 id="confirm-modal-title" data-modal-title>Confirm</h2>
+        </div>
+        <button class="modal-close-button confirm-modal-close" type="button" data-confirm-modal-close aria-label="Close confirmation dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </header>
+      <div class="confirm-modal-body">
+        <p id="confirm-modal-message" class="confirm-modal-message" data-modal-description></p>
+        <div class="form-actions confirm-modal-actions">
+          <button class="btn btn-secondary confirm-modal-cancel" type="button" data-confirm-modal-cancel>Cancel</button>
+          <button class="btn btn-primary confirm-modal-confirm" type="button" data-confirm-modal-confirm data-modal-default-focus>Confirm</button>
+        </div>
+      </div>
+    `);
+
+    const closeButton = state.modal.querySelector('[data-confirm-modal-close]');
+    const cancelButton = state.modal.querySelector('[data-confirm-modal-cancel]');
+    const confirmButton = state.modal.querySelector('[data-confirm-modal-confirm]');
+
+    state.resolver = null;
+    state.previousFocus = null;
+
+    function closeConfirmModal(confirmed) {
+      if (!state.resolver) {
+        return;
+      }
+
+      const resolve = state.resolver;
+      state.resolver = null;
+      state.closeModal();
+      resolve(confirmed);
+    }
+
+    closeButton.addEventListener('click', () => closeConfirmModal(false));
+    cancelButton.addEventListener('click', () => closeConfirmModal(false));
+    confirmButton.addEventListener('click', () => closeConfirmModal(true));
+
+    state.closeConfirmModal = closeConfirmModal;
+    confirmModalState = state;
     return confirmModalState;
   }
 
@@ -295,23 +377,33 @@
       state.closeConfirmModal(false);
     }
 
-    state.title.textContent = title;
-    state.message.textContent = message;
-    state.cancelButton.textContent = cancelLabel;
-    state.confirmButton.textContent = confirmLabel;
-    state.confirmButton.dataset.variant = destructive ? 'destructive' : 'primary';
+    const titleNode = state.modal.querySelector('[data-modal-title]');
+    const messageNode = state.modal.querySelector('[data-modal-description]');
+    const cancelButton = state.modal.querySelector('[data-confirm-modal-cancel]');
+    const confirmButton = state.modal.querySelector('[data-confirm-modal-confirm]');
+
+    if (titleNode) {
+      titleNode.textContent = title;
+    }
+
+    if (messageNode) {
+      messageNode.textContent = message;
+    }
+
+    if (cancelButton) {
+      cancelButton.textContent = cancelLabel;
+    }
+
+    if (confirmButton) {
+      confirmButton.textContent = confirmLabel;
+      confirmButton.dataset.variant = destructive ? 'destructive' : 'primary';
+    }
+
     state.modal.dataset.destructive = destructive ? 'true' : 'false';
-    state.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    state.modal.hidden = false;
-    document.body.classList.add('confirm-modal-open');
+    state.openModal('[data-modal-default-focus]');
 
     return new Promise((resolve) => {
       state.resolver = resolve;
-      window.requestAnimationFrame(() => {
-        if (state.resolver && !state.modal.hidden && state.cancelButton) {
-          state.cancelButton.focus({ preventScroll: true });
-        }
-      });
     });
   }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ModalShell } from '../../../shared/components/ModalShell';
 import { TaskAttachmentsUploader } from '../components/tasks/TaskAttachmentsUploader';
 import { TaskAttachmentList } from '../components/tasks/TaskAttachmentList';
 import { TaskDescriptionEditor } from '../components/editor/TaskDescriptionEditor';
@@ -73,32 +74,33 @@ export function TaskFormModal({
   }, [task]);
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="modal-card">
-        <header className="modal-header">
-          <div>
-            <span className="section-chip">Task</span>
-            <h2>{mode === 'create' ? 'Create task' : 'Edit task'}</h2>
-            <p>Capture the brief, assign the work, and keep the team aligned.</p>
-          </div>
-          <button type="button" className="modal-close-button" onClick={onClose} aria-label="Close task modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </header>
+    <ModalShell open={true} onClose={onClose} rootClassName="modal-backdrop" panelClassName="modal-card">
+      <header className="modal-header">
+        <div>
+          <span className="section-chip">Task</span>
+          <h2>{mode === 'create' ? 'Create task' : 'Edit task'}</h2>
+          <p>Capture the brief, assign the work, and keep the team aligned.</p>
+        </div>
+        <button type="button" className="modal-close-button" onClick={onClose} aria-label="Close task modal">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </header>
 
-        <form
-          className="task-form"
-          onSubmit={form.handleSubmit(async (values) => {
-            setIsSaving(true);
-            try {
-              await onSubmit(values, pendingFiles);
-              setPendingFiles([]);
-              onClose();
-            } finally {
-              setIsSaving(false);
-            }
-          })}
-        >
+      <form
+        className="task-form"
+        onSubmit={form.handleSubmit(async (values) => {
+          setIsSaving(true);
+          try {
+            await onSubmit(values, pendingFiles);
+            setPendingFiles([]);
+            onClose();
+          } finally {
+            setIsSaving(false);
+          }
+        })}
+      >
           <div className="field">
             <label htmlFor="task-title-react">Task title</label>
             <input id="task-title-react" type="text" {...form.register('title')} />
@@ -276,8 +278,7 @@ export function TaskFormModal({
               {isSaving ? 'Saving...' : mode === 'create' ? 'Create task' : 'Save changes'}
             </button>
           </footer>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ModalShell>
   );
 }

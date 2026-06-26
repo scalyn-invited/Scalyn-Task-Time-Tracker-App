@@ -11,6 +11,9 @@ export default defineConfig({
   base: '/assets/timer-app/',
   server: {
     port: 5173,
+    fs: {
+      allow: [resolve(__dirname, '..')],
+    },
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',

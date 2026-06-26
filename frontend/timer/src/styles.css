@@ -17,6 +17,10 @@ body {
     linear-gradient(180deg, #f6f9ff 0%, #edf3ff 100%);
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 .timer-shell {
   min-height: 100vh;
 }
@@ -256,6 +260,28 @@ body {
 
 .modal-card {
   animation: modal-rise 180ms ease-out;
+}
+
+.icon-button {
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(45, 77, 160, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #10213a;
+  box-shadow: 0 10px 24px rgba(22, 49, 94, 0.06);
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .modal-actions {

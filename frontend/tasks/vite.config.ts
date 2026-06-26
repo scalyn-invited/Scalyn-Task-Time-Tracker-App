@@ -11,6 +11,9 @@ export default defineConfig({
   base: '/assets/tasks-app/',
   server: {
     port: 5174,
+    fs: {
+      allow: [resolve(__dirname, '..')],
+    },
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',

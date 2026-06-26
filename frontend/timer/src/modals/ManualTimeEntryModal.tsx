@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { ModalShell } from '../../../shared/components/ModalShell';
 import { ClientOption, ManualEntryPayload, TaskOption } from '../types';
 
 interface ManualTimeEntryModalProps {
@@ -100,24 +101,17 @@ export function ManualTimeEntryModal({
   }
 
   return (
-    <div className="modal-overlay" role="presentation" onClick={onClose}>
-      <div
-        className="modal-card card-panel manual-time-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="manual-time-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="section-header">
-          <h2 id="manual-time-title">Manual Time Entry</h2>
-          <button className="icon-button" type="button" onClick={onClose} aria-label="Close manual time entry">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m6 6 12 12M18 6 6 18" />
-            </svg>
-          </button>
-        </div>
+    <ModalShell open={open} onClose={onClose} rootClassName="modal-overlay" panelClassName="modal-card card-panel manual-time-modal">
+      <div className="section-header">
+        <h2 id="manual-time-title">Manual Time Entry</h2>
+        <button className="icon-button" type="button" onClick={onClose} aria-label="Close manual time entry">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
 
-        <form className="manual-time-form" onSubmit={handleSubmit}>
+      <form className="manual-time-form" onSubmit={handleSubmit}>
           <label>
             <span>Client</span>
             <select
@@ -185,8 +179,7 @@ export function ManualTimeEntryModal({
               <span>{loading ? 'Saving...' : 'Save Entry'}</span>
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </ModalShell>
   );
 }
