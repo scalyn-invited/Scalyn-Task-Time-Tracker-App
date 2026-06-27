@@ -14,13 +14,14 @@ export function TeamMemberList({ members, onEditRole, onRemove }: Props) {
       className="team-table"
       emptyMessage="No team members found."
       searchPlaceholder="Search members"
+      getRowId={(member) => member.id}
       columns={[
-        { title: 'Name', render: (member) => member.user.name },
-        { title: 'Email', render: (member) => member.user.email },
-        { title: 'Team Role', render: (member) => member.role },
-        { title: 'System Role', render: (member) => member.user.systemRole },
-        { title: 'Joined Date', render: (member) => new Date(member.joinedAt).toLocaleDateString() },
-        { title: 'Status', render: (member) => member.user.isActive ? 'Active' : 'Inactive' },
+        { key: 'name', title: 'Name', display: (member) => member.user.name, searchValue: (member) => member.user.name },
+        { key: 'email', title: 'Email', display: (member) => member.user.email, searchValue: (member) => member.user.email },
+        { key: 'teamRole', title: 'Team Role', display: (member) => member.role, searchValue: (member) => member.role },
+        { key: 'systemRole', title: 'System Role', display: (member) => member.user.systemRole, searchValue: (member) => member.user.systemRole },
+        { key: 'joinedAt', title: 'Joined Date', display: (member) => new Date(member.joinedAt).toLocaleDateString(), sortValue: (member) => new Date(member.joinedAt).getTime() },
+        { key: 'status', title: 'Status', display: (member) => member.user.isActive ? 'Active' : 'Inactive', sortValue: (member) => member.user.isActive ? 1 : 0, searchValue: (member) => member.user.isActive ? 'Active' : 'Inactive' },
       ]}
       actions={[
         {

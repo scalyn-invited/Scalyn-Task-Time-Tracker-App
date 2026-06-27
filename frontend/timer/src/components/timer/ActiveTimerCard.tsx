@@ -70,7 +70,7 @@ export function ActiveTimerCard({
             <div className="timer-action-row">
               {isRunning ? (
                 <button
-                  className="timer-action-button timer-action-button-secondary"
+                  className="btn btn-warning timer-action-button timer-action-button-secondary"
                   type="button"
                   onClick={onPause}
                   disabled={loading}
@@ -84,7 +84,7 @@ export function ActiveTimerCard({
 
               {isPaused ? (
                 <button
-                  className="timer-action-button timer-action-button-secondary"
+                  className="btn btn-success timer-action-button timer-action-button-secondary"
                   type="button"
                   onClick={onResume}
                   disabled={loading}
@@ -97,7 +97,7 @@ export function ActiveTimerCard({
               ) : null}
 
               <button
-                className="danger-action timer-stop-button"
+                className="btn btn-danger timer-stop-button"
                 type="button"
                 onClick={onStop}
                 disabled={loading || (!isRunning && !isPaused)}

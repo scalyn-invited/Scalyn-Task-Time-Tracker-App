@@ -23,7 +23,7 @@ export function BulkActionToolbar({ count, actions, onClear }: BulkActionToolbar
             <button
               key={action.key}
               type="button"
-              className={action.variant === 'danger' ? 'btn btn-secondary' : 'action-button'}
+              className={action.variant === 'danger' ? 'btn btn-danger' : 'btn btn-primary'}
               onClick={action.onClick}
             >
               <span>{action.label}</span>

@@ -4,8 +4,10 @@ import type { SafeUser } from '../types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { DataTable } from '../../../shared/components/DataTable';
 import { BulkActionToolbar } from '../../../shared/components/BulkActionToolbar';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 export function UsersPage() {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<SafeUser[]>([]);
   const [teams, setTeams] = useState<Array<{ id: number; name: string }>>([]);
   const [editingUser, setEditingUser] = useState<SafeUser | null | { id: 0; name: ''; email: ''; systemRole: 'member'; role: 'MEMBER'; isActive: true; createdAt: ''; updatedAt: '' }> (null);
@@ -34,7 +36,9 @@ export function UsersPage() {
       setSelectedUserIds([]);
       setError('');
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load users');
+      const message = loadError instanceof Error ? loadError.message : 'Unable to load users';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -80,6 +84,7 @@ export function UsersPage() {
       if (editingUser && editingUser.id !== 0) {
         await updateUser(editingUser.id, { name: name.trim(), email: email.trim(), systemRole });
         setFeedback('User updated successfully.');
+        showToast('User updated successfully.', 'success');
       } else {
         await createUser({
           name: name.trim(),
@@ -92,14 +97,17 @@ export function UsersPage() {
           teamRole: assignToTeam ? teamRole : undefined,
         });
         setFeedback('User created successfully.');
+        showToast('User created successfully.', 'success');
       }
 
       setError('');
       setEditingUser(null);
       await loadData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to save user');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to save user';
+      setError(message);
       setFeedback('');
+      showToast(message, 'error');
     }
   }
 
@@ -117,9 +125,6 @@ export function UsersPage() {
           </button>
         </div>
       </header>
-
-      {feedback ? <div className="feedback" data-tone="success">{feedback}</div> : null}
-      {error ? <div className="feedback" data-tone="error">{error}</div> : null}
 
       <section className="clients-summary-grid users-summary-grid">
         <article className="stat-card stat-card-blue"><div className="stat-card-head">Total Users</div><div className="stat-card-body"><div><strong>{summary.total}</strong><span>All accounts</span></div></div></article>
@@ -149,13 +154,26 @@ export function UsersPage() {
             onSelectionChange={setSelectedUserIds}
             columns={[
               {
+                key: 'name',
                 title: 'Name',
-                render: (user) => `<button class="client-name-link" type="button"><span class="client-avatar">${user.name.slice(0, 2).toUpperCase()}</span><span class="client-name-copy"><strong>${user.name}</strong><span>${user.systemRole}</span></span></button>`,
+                display: (user) => `<button class="client-name-link" type="button"><span class="client-avatar">${user.name.slice(0, 2).toUpperCase()}</span><span class="client-name-copy"><strong>${user.name}</strong><span>${user.systemRole}</span></span></button>`,
+                searchValue: (user) => `${user.name} ${user.systemRole}`,
               },
-              { title: 'Email', value: 'email' },
-              { title: 'Role', render: (user) => `<span class="status-pill ${user.systemRole === 'admin' ? 'status-pill-blue' : user.systemRole === 'manager' ? 'status-pill-purple' : 'status-pill-muted'}">${user.systemRole}</span>` },
-              { title: 'Status', render: (user) => `<span class="status-pill ${user.isActive ? 'status-pill-green' : 'status-pill-red'}">${user.isActive ? 'Active' : 'Inactive'}</span>` },
-              { title: 'Created', render: (user) => new Date(user.createdAt).toLocaleString() },
+              { key: 'email', title: 'Email', value: 'email' },
+              {
+                key: 'role',
+                title: 'Role',
+                display: (user) => `<span class="status-pill ${user.systemRole === 'admin' ? 'status-pill-blue' : user.systemRole === 'manager' ? 'status-pill-purple' : 'status-pill-muted'}">${user.systemRole}</span>`,
+                searchValue: (user) => user.systemRole,
+              },
+              {
+                key: 'status',
+                title: 'Status',
+                display: (user) => `<span class="status-pill ${user.isActive ? 'status-pill-green' : 'status-pill-red'}">${user.isActive ? 'Active' : 'Inactive'}</span>`,
+                sortValue: (user) => (user.isActive ? 1 : 0),
+                searchValue: (user) => (user.isActive ? 'Active' : 'Inactive'),
+              },
+              { key: 'createdAt', title: 'Created', display: (user) => new Date(user.createdAt).toLocaleString(), sortValue: (user) => new Date(user.createdAt).getTime() },
             ]}
             actions={[
               {
@@ -190,11 +208,14 @@ export function UsersPage() {
               await bulkUpdateUserStatus(selectedUserIds, bulkIsActive);
               setBulkStatusOpen(false);
               setFeedback(`${selectedUserIds.length} users ${bulkIsActive ? 'activated' : 'deactivated'} successfully.`);
+              showToast(`${selectedUserIds.length} users ${bulkIsActive ? 'activated' : 'deactivated'} successfully.`, 'success');
               setError('');
               await loadData();
             } catch (statusError) {
-              setError(statusError instanceof Error ? statusError.message : 'Unable to update users');
+              const message = statusError instanceof Error ? statusError.message : 'Unable to update users';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}
@@ -251,11 +272,14 @@ export function UsersPage() {
               await deleteUser(pendingDelete.id);
               setPendingDelete(null);
               setFeedback('User deleted successfully.');
+              showToast('User deleted successfully.', 'success');
               setError('');
               await loadData();
             } catch (deleteError) {
-              setError(deleteError instanceof Error ? deleteError.message : 'Unable to delete user');
+              const message = deleteError instanceof Error ? deleteError.message : 'Unable to delete user';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}

@@ -6,6 +6,7 @@ import type { TimesheetResponse } from '../types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { DataTable } from '../../../shared/components/DataTable';
 import { BulkActionToolbar } from '../../../shared/components/BulkActionToolbar';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 const formatDuration = (seconds: number): string => {
   const total = Math.max(0, Number(seconds || 0));
@@ -16,6 +17,7 @@ const formatDuration = (seconds: number): string => {
 };
 
 export function TimesheetsPage() {
+  const { showToast } = useToast();
   const [users, setUsers] = useState<SafeUser[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -88,7 +90,9 @@ export function TimesheetsPage() {
       setSelectedEntryIds([]);
       setError('');
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load timesheets');
+      const message = loadError instanceof Error ? loadError.message : 'Unable to load timesheets';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -133,9 +137,6 @@ export function TimesheetsPage() {
           </button>
         </div>
       </header>
-
-      {feedback ? <div className="feedback" data-tone="success">{feedback}</div> : null}
-      {error ? <div className="feedback" data-tone="error">{error}</div> : null}
 
       <section className="timesheet-summary-grid">
         <article className="stat-card stat-card-blue"><div className="stat-card-head">Total Duration</div><div className="stat-card-body"><strong>{formatDuration(response?.totals.durationSeconds ?? 0)}</strong><span>Tracked time</span></div></article>
@@ -182,21 +183,24 @@ export function TimesheetsPage() {
           onSelectionChange={setSelectedEntryIds}
           columns={[
             {
+              key: 'createdSort',
               title: 'Created sort',
-              render: (entry) => String(new Date(entry.createdAt).getTime()),
+              display: (entry) => String(new Date(entry.createdAt).getTime()),
               sortValue: (entry) => new Date(entry.createdAt).getTime(),
               searchable: false,
               visible: false,
             },
             {
+              key: 'date',
               title: 'Date',
-              render: (entry) => new Date(entry.startTime).toLocaleDateString(),
+              display: (entry) => new Date(entry.startTime).toLocaleDateString(),
               sortValue: (entry) => new Date(entry.createdAt).getTime(),
+              searchValue: (entry) => `${new Date(entry.startTime).toLocaleDateString()} ${new Date(entry.startTime).toLocaleString()}`,
             },
-            { title: 'Task', render: (entry) => entry.task.title },
-            { title: 'Client', render: (entry) => entry.client.name },
-            { title: 'Duration', render: (entry) => formatDuration(entry.durationSeconds) },
-            { title: 'Description', render: (entry) => entry.description || 'No description' },
+            { key: 'task', title: 'Task', display: (entry) => entry.task.title, searchValue: (entry) => entry.task.title },
+            { key: 'client', title: 'Client', display: (entry) => entry.client.name, searchValue: (entry) => entry.client.name },
+            { key: 'duration', title: 'Duration', display: (entry) => formatDuration(entry.durationSeconds), sortValue: (entry) => entry.durationSeconds },
+            { key: 'description', title: 'Description', display: (entry) => entry.description || 'No description', searchValue: (entry) => entry.description || 'No description' },
           ]}
           actions={[
             {
@@ -239,6 +243,7 @@ export function TimesheetsPage() {
                       if (Object.keys(changes).length === 0) {
                         setError('Select at least one field to update.');
                         setFeedback('');
+                        showToast('Select at least one field to update.', 'warning');
                         return;
                       }
                       try {
@@ -248,10 +253,13 @@ export function TimesheetsPage() {
                         setBulkTaskId('');
                         setFeedback(`${selectedEntryIds.length} time entries updated successfully.`);
                         setError('');
+                        showToast(`${selectedEntryIds.length} time entries updated successfully.`, 'success');
                         await loadData();
                       } catch (updateError) {
-                        setError(updateError instanceof Error ? updateError.message : 'Unable to bulk update time entries');
+                        const message = updateError instanceof Error ? updateError.message : 'Unable to bulk update time entries';
+                        setError(message);
                         setFeedback('');
+                        showToast(message, 'error');
                       }
                     })();
                   }}>
@@ -281,10 +289,13 @@ export function TimesheetsPage() {
               setBulkDeleteOpen(false);
               setFeedback(`${selectedEntryIds.length} time entries deleted successfully.`);
               setError('');
+              showToast(`${selectedEntryIds.length} time entries deleted successfully.`, 'success');
               await loadData();
             } catch (deleteError) {
-              setError(deleteError instanceof Error ? deleteError.message : 'Unable to bulk delete time entries');
+              const message = deleteError instanceof Error ? deleteError.message : 'Unable to bulk delete time entries';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}
@@ -320,10 +331,13 @@ export function TimesheetsPage() {
                           setEditingEntry(null);
                           setFeedback('Time entry updated successfully.');
                           setError('');
+                          showToast('Time entry updated successfully.', 'success');
                           await loadData();
                         } catch (updateError) {
-                          setError(updateError instanceof Error ? updateError.message : 'Unable to update time entry');
+                          const message = updateError instanceof Error ? updateError.message : 'Unable to update time entry';
+                          setError(message);
                           setFeedback('');
+                          showToast(message, 'error');
                         }
                       })();
                     }}
@@ -358,10 +372,13 @@ export function TimesheetsPage() {
               setPendingDeleteId(null);
               setFeedback('Time entry deleted successfully.');
               setError('');
+              showToast('Time entry deleted successfully.', 'success');
               await loadData();
             } catch (deleteError) {
-              setError(deleteError instanceof Error ? deleteError.message : 'Unable to delete time entry');
+              const message = deleteError instanceof Error ? deleteError.message : 'Unable to delete time entry';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}

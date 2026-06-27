@@ -6,8 +6,8 @@ It combines:
 
 - a NestJS backend with JWT authentication and validation
 - Prisma-backed data models for users, clients, tasks, labels, comments, attachments, activities, and time entries
-- two bundled frontend experiences for task management and timer tracking
-- server-rendered/static app pages for core workflows like login, profile, reports, team, and settings
+- a unified React single-page application served by NestJS
+- static asset delivery from `public/` with the active SPA build output under `public/app/`
 
 ## Features
 
@@ -33,9 +33,10 @@ It combines:
 
 - `src/` - NestJS application code
 - `prisma/` - Prisma schema, migrations, and seed script
-- `frontend/tasks/` - task management frontend
-- `frontend/timer/` - timer tracking frontend
-- `public/` - static pages and built frontend assets
+- `frontend/app/` - unified React SPA source
+- `frontend/tasks/`, `frontend/timer/`, `frontend/reports/`, `frontend/team/` - feature code used by the unified app during migration/consolidation
+- `public/` - static assets and built frontend output
+- `public/app/` - active built SPA served by NestJS
 - `dist/` - compiled backend output
 
 ## Requirements
@@ -105,14 +106,19 @@ Run the production entrypoint after building:
 npm run start:prod
 ```
 
-## Frontend Builds
+## Frontend Build and Runtime
 
-The repo includes two Vite entrypoints:
+The active frontend is a unified React SPA built with:
 
-- `npm run build:tasks`
-- `npm run build:timer`
+- `npm run build:app`
 
-These are already included in the main `build` script.
+The main build script already includes the SPA build before compiling the NestJS backend:
+
+- `npm run build`
+
+At runtime, NestJS serves the SPA entrypoint from:
+
+- `public/app/index.html`
 
 ## Available Routes
 
@@ -133,5 +139,7 @@ The app serves core pages at:
 ## Notes
 
 - Static assets are served from `public/`.
+- The active frontend runtime path is the unified SPA under `public/app/`.
+- Legacy static HTML pages and old multi-app frontend build outputs have been retired from the active runtime path.
 - Prisma generates its client into `src/generated/prisma/`.
 - The repository is configured to keep build output (`dist/`) in source control while excluding local-only files like `.env`, `node_modules/`, and `uploads/`.

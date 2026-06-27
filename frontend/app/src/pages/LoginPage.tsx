@@ -18,7 +18,7 @@ export function LoginPage({ currentUser, onLoggedIn }: LoginPageProps) {
 
   useEffect(() => {
     if (currentUser) {
-      navigate('/timer', { replace: true });
+      navigate('/tasks', { replace: true });
     }
   }, [currentUser, navigate]);
 
@@ -31,7 +31,7 @@ export function LoginPage({ currentUser, onLoggedIn }: LoginPageProps) {
       const response = await login({ email: email.trim(), password });
       setToken(response.accessToken);
       onLoggedIn(response.user);
-      const next = (location.state as { from?: string } | null)?.from || '/timer';
+      const next = (location.state as { from?: string } | null)?.from || '/tasks';
       navigate(next, { replace: true });
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : 'Unable to login');

@@ -10,8 +10,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { key: 'timer', href: '/timer', label: 'Timer' },
   { key: 'tasks', href: '/tasks', label: 'Task', match: (pathname) => pathname === '/tasks' || pathname.startsWith('/tasks/') },
+  { key: 'timer', href: '/timer', label: 'Timer' },
   { key: 'timesheets', href: '/timesheets', label: 'Timesheets' },
   { key: 'clients', href: '/clients', label: 'Clients', match: (pathname) => pathname === '/clients' || pathname.startsWith('/clients/') },
   { key: 'team', href: '/team', label: 'Team', match: (pathname) => pathname === '/team' || pathname.startsWith('/team/') },

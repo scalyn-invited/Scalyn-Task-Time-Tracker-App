@@ -15,12 +15,13 @@ export function TeamListTable({ teams, onViewMembers, onEdit, onDelete }: Props)
       className="team-table"
       emptyMessage="No teams found."
       searchPlaceholder="Search teams"
+      getRowId={(team) => team.id}
       columns={[
-        { title: 'Team Name', render: (team) => team.name },
-        { title: 'Description', render: (team) => team.description ?? '' },
-        { title: 'Members', render: (team) => String(team.membersCount) },
-        { title: 'Managers', render: (team) => String(team.managersCount) },
-        { title: 'Created Date', render: (team) => new Date(team.createdAt).toLocaleDateString() },
+        { key: 'name', title: 'Team Name', display: (team) => team.name, searchValue: (team) => team.name },
+        { key: 'description', title: 'Description', display: (team) => team.description ?? '', searchValue: (team) => team.description ?? '' },
+        { key: 'membersCount', title: 'Members', display: (team) => String(team.membersCount), sortValue: (team) => team.membersCount },
+        { key: 'managersCount', title: 'Managers', display: (team) => String(team.managersCount), sortValue: (team) => team.managersCount },
+        { key: 'createdAt', title: 'Created Date', display: (team) => new Date(team.createdAt).toLocaleDateString(), sortValue: (team) => new Date(team.createdAt).getTime() },
       ]}
       actions={[
         {

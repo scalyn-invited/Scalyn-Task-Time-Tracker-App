@@ -17,9 +17,11 @@ import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import { CreateTaskModal } from '../../modals/CreateTaskModal';
 import { EditTaskModal } from '../../modals/EditTaskModal';
 import { BulkActionToolbar } from '../../../../shared/components/BulkActionToolbar';
+import { useToast } from '../../../../shared/components/ToastProvider';
 import type { Client, SafeUser, TaskFormValues, TaskLabel, TaskRecord, TimeEntry, TaskPriority, TaskStatus } from '../../types';
 
 export function TasksPage() {
+  const { showToast } = useToast();
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<SafeUser[]>([]);
@@ -53,10 +55,10 @@ export function TasksPage() {
       setUsers(nextUsers);
       setLabels(nextLabels);
       setSelectedTaskIds([]);
-      setFeedback('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load tasks';
       setFeedback(message);
+      showToast(message, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +124,9 @@ export function TasksPage() {
       setPendingDeleteTask(null);
       await loadPage({ clientId: selectedClientId, userId: selectedUserId });
     } catch (error: unknown) {
-      setFeedback(error instanceof Error ? error.message : 'Unable to delete task');
+      const message = error instanceof Error ? error.message : 'Unable to delete task';
+      setFeedback(message);
+      showToast(message, 'error');
     }
   };
 
@@ -139,6 +143,7 @@ export function TasksPage() {
 
     if (Object.keys(changes).length === 0) {
       setFeedback('Select at least one field to update.');
+      showToast('Select at least one field to update.', 'warning');
       return;
     }
 
@@ -148,9 +153,12 @@ export function TasksPage() {
       setBulkStatus('');
       setBulkPriority('');
       setFeedback(`${selectedTaskIds.length} tasks updated successfully.`);
+      showToast(`${selectedTaskIds.length} tasks updated successfully.`, 'success');
       await loadPage({ clientId: selectedClientId, userId: selectedUserId });
     } catch (error: unknown) {
-      setFeedback(error instanceof Error ? error.message : 'Unable to bulk update tasks');
+      const message = error instanceof Error ? error.message : 'Unable to bulk update tasks';
+      setFeedback(message);
+      showToast(message, 'error');
     }
   };
 
@@ -159,9 +167,12 @@ export function TasksPage() {
       await bulkDeleteTasks(selectedTaskIds);
       setBulkDeleteOpen(false);
       setFeedback(`${selectedTaskIds.length} tasks deleted successfully.`);
+      showToast(`${selectedTaskIds.length} tasks deleted successfully.`, 'success');
       await loadPage({ clientId: selectedClientId, userId: selectedUserId });
     } catch (error: unknown) {
-      setFeedback(error instanceof Error ? error.message : 'Unable to bulk delete tasks');
+      const message = error instanceof Error ? error.message : 'Unable to bulk delete tasks';
+      setFeedback(message);
+      showToast(message, 'error');
     }
   };
 
@@ -257,7 +268,6 @@ export function TasksPage() {
           <div>
             <h2>Task list</h2>
           </div>
-          <div className="feedback" data-tone={feedback ? 'error' : undefined} aria-live="polite">{feedback}</div>
         </div>
         {isLoading ? <div className="empty-state">Loading tasks...</div> : (
           <TaskDataTable

@@ -46,10 +46,10 @@ export function TimerSavedModal({ open, entry, onClose, onViewTimesheet }: Timer
           </div>
 
           <div className="timer-saved-actions">
-            <button className="action-button timer-saved-primary" type="button" onClick={onViewTimesheet}>
+            <button className="btn btn-primary timer-saved-primary" type="button" onClick={onViewTimesheet}>
               View Timesheet
             </button>
-            <button className="ghost-action timer-saved-secondary" type="button" onClick={onClose}>
+            <button className="btn btn-secondary timer-saved-secondary" type="button" onClick={onClose}>
               Close
             </button>
           </div>

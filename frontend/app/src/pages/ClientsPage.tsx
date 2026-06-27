@@ -13,6 +13,7 @@ import type { ClientRecord } from '../types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 import { DataTable } from '../../../shared/components/DataTable';
 import { BulkActionToolbar } from '../../../shared/components/BulkActionToolbar';
+import { useToast } from '../../../shared/components/ToastProvider';
 
 const formatTimeMinutes = (totalMinutes: number): string => {
   const minutes = Number(totalMinutes || 0);
@@ -27,6 +28,7 @@ const formatTimeMinutes = (totalMinutes: number): string => {
 const formatDateTime = (value?: string | null): string => (value ? new Date(value).toLocaleString() : '--');
 
 export function ClientsPage() {
+  const { showToast } = useToast();
   const [activeClients, setActiveClients] = useState<ClientRecord[]>([]);
   const [archivedClients, setArchivedClients] = useState<ClientRecord[]>([]);
   const [view, setView] = useState<'active' | 'archived'>('active');
@@ -54,7 +56,9 @@ export function ClientsPage() {
       setSelectedClientIds([]);
       setError('');
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load clients');
+      const message = loadError instanceof Error ? loadError.message : 'Unable to load clients';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -85,7 +89,9 @@ export function ClientsPage() {
       setSelectedClient(client);
       setError('');
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load client details');
+      const message = loadError instanceof Error ? loadError.message : 'Unable to load client details';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -101,6 +107,7 @@ export function ClientsPage() {
           billable,
         });
         setFeedback('Client updated successfully.');
+        showToast('Client updated successfully.', 'success');
       } else {
         await createClient({
           name: name.trim(),
@@ -109,14 +116,17 @@ export function ClientsPage() {
           billable,
         });
         setFeedback('Client created successfully.');
+        showToast('Client created successfully.', 'success');
       }
 
       setError('');
       setEditingClient(null);
       await loadData();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to save client');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to save client';
+      setError(message);
       setFeedback('');
+      showToast(message, 'error');
     }
   }
 
@@ -149,9 +159,6 @@ export function ClientsPage() {
         </div>
       </header>
 
-      {feedback ? <div className="feedback" data-tone="success">{feedback}</div> : null}
-      {error ? <div className="feedback" data-tone="error">{error}</div> : null}
-
       <section className="clients-summary-grid">
         <article className="stat-card stat-card-blue"><div className="stat-card-head">Total Clients</div><div className="stat-card-body"><div><strong>{activeClients.length + archivedClients.length}</strong><span>All records</span></div></div></article>
         <article className="stat-card stat-card-green"><div className="stat-card-head">Active</div><div className="stat-card-body"><div><strong>{activeClients.length}</strong><span>Visible in active view</span></div></div></article>
@@ -183,12 +190,31 @@ export function ClientsPage() {
             onSelectionChange={setSelectedClientIds}
             columns={[
               {
+                key: 'clientName',
                 title: 'Client Name',
-                render: (client) => `<button class="client-name-link" type="button"><span class="client-avatar">${client.name.slice(0, 2).toUpperCase()}</span><span class="client-name-copy"><strong>${client.name}</strong><span>${client.description || 'No description'}</span></span></button>`,
+                display: (client) => `<button class="client-name-link" type="button"><span class="client-avatar">${client.name.slice(0, 2).toUpperCase()}</span><span class="client-name-copy"><strong>${client.name}</strong><span>${client.description || 'No description'}</span></span></button>`,
+                searchValue: (client) => `${client.name} ${client.description || ''}`,
               },
-              { title: 'Monthly Allowance', render: (client) => formatTimeMinutes(client.monthlyAllowanceMinutes) },
-              { title: 'Billable', render: (client) => `<span class="status-pill ${client.billable ? 'status-pill-blue' : 'status-pill-muted'}">${client.billable ? 'Billable' : 'Not billable'}</span>` },
-              { title: 'Status', render: (client) => `<span class="status-pill ${client.archivedAt ? 'status-pill-muted' : 'status-pill-green'}">${client.archivedAt ? 'Archived' : 'Active'}</span>` },
+              {
+                key: 'monthlyAllowance',
+                title: 'Monthly Allowance',
+                display: (client) => formatTimeMinutes(client.monthlyAllowanceMinutes),
+                sortValue: (client) => client.monthlyAllowanceMinutes,
+              },
+              {
+                key: 'billable',
+                title: 'Billable',
+                display: (client) => `<span class="status-pill ${client.billable ? 'status-pill-blue' : 'status-pill-muted'}">${client.billable ? 'Billable' : 'Not billable'}</span>`,
+                sortValue: (client) => (client.billable ? 1 : 0),
+                searchValue: (client) => (client.billable ? 'Billable' : 'Not billable'),
+              },
+              {
+                key: 'status',
+                title: 'Status',
+                display: (client) => `<span class="status-pill ${client.archivedAt ? 'status-pill-muted' : 'status-pill-green'}">${client.archivedAt ? 'Archived' : 'Active'}</span>`,
+                sortValue: (client) => (client.archivedAt ? 1 : 0),
+                searchValue: (client) => (client.archivedAt ? 'Archived' : 'Active'),
+              },
             ]}
             actions={[
               {
@@ -283,16 +309,20 @@ export function ClientsPage() {
               if (view === 'archived') {
                 await bulkRestoreClients(selectedClientIds);
                 setFeedback(`${selectedClientIds.length} clients restored successfully.`);
+                showToast(`${selectedClientIds.length} clients restored successfully.`, 'success');
               } else {
                 await bulkArchiveClients(selectedClientIds);
                 setFeedback(`${selectedClientIds.length} clients archived successfully.`);
+                showToast(`${selectedClientIds.length} clients archived successfully.`, 'success');
               }
               setBulkConfirmOpen(false);
               setError('');
               await loadData();
             } catch (archiveError) {
-              setError(archiveError instanceof Error ? archiveError.message : 'Unable to update clients');
+              const message = archiveError instanceof Error ? archiveError.message : 'Unable to update clients';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}
@@ -313,16 +343,20 @@ export function ClientsPage() {
               if (view === 'archived') {
                 await restoreClient(confirmingClient.id);
                 setFeedback('Client restored successfully.');
+                showToast('Client restored successfully.', 'success');
               } else {
                 await archiveClient(confirmingClient.id);
                 setFeedback('Client archived successfully.');
+                showToast('Client archived successfully.', 'success');
               }
               setConfirmingClient(null);
               setError('');
               await loadData();
             } catch (archiveError) {
-              setError(archiveError instanceof Error ? archiveError.message : 'Unable to update client');
+              const message = archiveError instanceof Error ? archiveError.message : 'Unable to update client';
+              setError(message);
               setFeedback('');
+              showToast(message, 'error');
             }
           })();
         }}

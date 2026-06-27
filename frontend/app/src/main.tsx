@@ -10,6 +10,7 @@ import { fetchCurrentUser, getToken } from './lib/api';
 import type { SafeUser } from './types';
 import { AppShell } from './components/AppShell';
 import { AuthGuard } from './components/AuthGuard';
+import { ToastProvider } from '../../shared/components/ToastProvider';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -24,6 +25,7 @@ import { ReportsRoutePage } from './pages/ReportsRoutePage';
 import { TeamsRoutePage } from './pages/TeamsRoutePage';
 import { TeamMembersRoutePage } from './pages/TeamMembersRoutePage';
 import { TeamProfileRoutePage } from './pages/TeamProfileRoutePage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<SafeUser | null>(null);
@@ -55,7 +57,7 @@ function App() {
 
         <Route element={<AuthGuard currentUser={currentUser} loading={loading} />}>
           <Route element={currentUser ? <AppShell currentUser={currentUser} /> : null}>
-            <Route path="/" element={<Navigate to="/timer" replace />} />
+            <Route path="/" element={<Navigate to="/tasks" replace />} />
             <Route path="/timer" element={<TimerRoutePage />} />
             <Route path="/tasks" element={<TasksRoutePage />} />
             <Route path="/tasks/:taskId" element={<TaskDetailsRoutePage />} />
@@ -69,7 +71,7 @@ function App() {
             <Route path="/team/profile" element={<TeamProfileRoutePage />} />
             <Route path="/profile" element={<ProfilePage currentUser={currentUser!} onProfileUpdated={setCurrentUser} />} />
             <Route path="/settings" element={<SettingsPage currentUser={currentUser!} />} />
-            <Route path="*" element={<Navigate to="/timer" replace />} />
+            <Route path="*" element={<NotFoundPage authenticated />} />
           </Route>
         </Route>
 
@@ -78,6 +80,8 @@ function App() {
             <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>
+
+        <Route path="*" element={<NotFoundPage authenticated={Boolean(currentUser)} />} />
       </Routes>
     </BrowserRouter>
   );
@@ -90,6 +94,8 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
   </React.StrictMode>,
 );

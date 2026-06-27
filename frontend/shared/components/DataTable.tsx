@@ -1,5 +1,5 @@
 import DataTableLib from 'datatables.net-dt';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { renderTableActionButtonHtml, type TableActionIcon, type TableActionVariant, escapeHtml } from '../lib/table-action-icons';
 
 export interface DataTableAction<T> {
@@ -11,9 +11,10 @@ export interface DataTableAction<T> {
 }
 
 export interface DataTableColumn<T> {
+  key: string;
   title: string;
   value?: keyof T | ((row: T) => unknown);
-  render?: (row: T) => string;
+  display?: (row: T) => string;
   sortValue?: (row: T) => string | number;
   searchValue?: (row: T) => string;
   orderable?: boolean;
@@ -32,22 +33,22 @@ interface DataTableProps<T> {
   order?: Array<[number, 'asc' | 'desc']>;
   searchPlaceholder?: string;
   selectable?: boolean;
-  getRowId?: (row: T) => number;
+  getRowId: (row: T) => number;
   selectedRowIds?: number[];
   onSelectionChange?: (ids: number[]) => void;
 }
 
-function resolveColumnValue<T>(row: T, column: DataTableColumn<T>): unknown {
-  if (column.render) {
-    return column.render(row);
+function resolveDisplayValue<T>(row: T, column: DataTableColumn<T>): string {
+  if (column.display) {
+    return column.display(row);
   }
 
   if (typeof column.value === 'function') {
-    return column.value(row);
+    return escapeHtml(column.value(row));
   }
 
   if (typeof column.value === 'string') {
-    return row[column.value];
+    return escapeHtml(row[column.value]);
   }
 
   return '';
@@ -69,9 +70,14 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const tableRef = useRef<HTMLTableElement | null>(null);
   const instanceRef = useRef<DataTableLib | null>(null);
-  const rowsRef = useRef<T[]>(data);
 
-  rowsRef.current = data;
+  const rowMap = useMemo(() => {
+    const next = new Map<number, T>();
+    data.forEach((row) => next.set(getRowId(row), row));
+    return next;
+  }, [data, getRowId]);
+
+  const visibleRowIds = useMemo(() => data.map((row) => getRowId(row)), [data, getRowId]);
 
   useEffect(() => {
     const table = tableRef.current;
@@ -84,7 +90,7 @@ export function DataTable<T>({
       instanceRef.current = null;
     }
 
-    const headers = columns.map((column) => ({
+    const dataTableColumns = columns.map((column) => ({
       title: column.title,
       orderable: column.orderable ?? true,
       searchable: column.searchable ?? true,
@@ -99,38 +105,40 @@ export function DataTable<T>({
           return column.searchValue(row);
         }
 
-        const value = resolveColumnValue(row, column);
-        return typeof value === 'string' ? value : escapeHtml(value);
+        return resolveDisplayValue(row, column);
       },
     }));
 
     if (selectable) {
-      headers.unshift({
+      dataTableColumns.unshift({
         title: '<input type="checkbox" data-select-all />',
         orderable: false,
         searchable: false,
+        visible: true,
         className: 'datatable-select-column',
-        render: (_value: unknown, _type: unknown, row: T) => {
-          const rowId = getRowId ? getRowId(row) : rowsRef.current.indexOf(row) + 1;
+        render: (_value: unknown, _type: string, row: T) => {
+          const rowId = getRowId(row);
           const checked = selectedRowIds.includes(rowId);
-          return `<input type="checkbox" data-select-row="${rowId}" ${checked ? 'checked' : ''} />`;
+          return `<input type="checkbox" data-select-row-id="${rowId}" ${checked ? 'checked' : ''} />`;
         },
       });
     }
 
     if (actions.length > 0) {
-      headers.push({
+      dataTableColumns.push({
         title: 'Actions',
         orderable: false,
         searchable: false,
+        visible: true,
         className: 'datatable-actions-column',
-        render: (_value: unknown, _type: unknown, row: T) => {
+        render: (_value: unknown, _type: string, row: T) => {
+          const rowId = getRowId(row);
           return `<div class="table-action-group">${actions.map((action, index) => renderTableActionButtonHtml({
             action: action.action,
             ariaLabel: typeof action.label === 'function' ? action.label(row) : action.label,
             title: typeof action.title === 'function' ? action.title(row) : action.title ?? (typeof action.label === 'function' ? action.label(row) : action.label),
             variant: typeof action.variant === 'function' ? action.variant(row) : action.variant,
-            dataAttributes: { 'action-index': index, 'row-index': rowsRef.current.indexOf(row) },
+            dataAttributes: { 'action-index': index, 'row-id': rowId },
           })).join('')}</div>`;
         },
       });
@@ -138,7 +146,7 @@ export function DataTable<T>({
 
     const instance = new DataTableLib(table, {
       data,
-      columns: headers,
+      columns: dataTableColumns,
       paging: true,
       searching: true,
       info: true,
@@ -153,10 +161,8 @@ export function DataTable<T>({
         ? (thead) => {
             const checkbox = thead.querySelector<HTMLInputElement>('[data-select-all]');
             if (checkbox) {
-              checkbox.checked = data.length > 0 && data.every((row, index) => {
-                const rowId = getRowId ? getRowId(row) : index + 1;
-                return selectedRowIds.includes(rowId);
-              });
+              checkbox.checked = visibleRowIds.length > 0 && visibleRowIds.every((rowId) => selectedRowIds.includes(rowId));
+              checkbox.indeterminate = visibleRowIds.some((rowId) => selectedRowIds.includes(rowId)) && !checkbox.checked;
             }
           }
         : undefined,
@@ -167,15 +173,12 @@ export function DataTable<T>({
       const target = event.target as HTMLElement | null;
 
       if (selectable && target instanceof HTMLInputElement && target.matches('[data-select-all]')) {
-        const nextIds = target.checked
-          ? rowsRef.current.map((row, index) => (getRowId ? getRowId(row) : index + 1))
-          : [];
-        onSelectionChange?.(nextIds);
+        onSelectionChange?.(target.checked ? [...new Set(visibleRowIds)] : []);
         return;
       }
 
-      if (selectable && target instanceof HTMLInputElement && target.matches('[data-select-row]')) {
-        const rowId = Number(target.dataset.selectRow);
+      if (selectable && target instanceof HTMLInputElement && target.matches('[data-select-row-id]')) {
+        const rowId = Number(target.dataset.selectRowId);
         const next = target.checked
           ? [...selectedRowIds, rowId]
           : selectedRowIds.filter((id) => id !== rowId);
@@ -183,15 +186,15 @@ export function DataTable<T>({
         return;
       }
 
-      const button = target?.closest<HTMLButtonElement>('[data-action-index][data-row-index]');
+      const button = target?.closest<HTMLButtonElement>('[data-action-index][data-row-id]');
       if (!button) {
         return;
       }
 
       const actionIndex = Number(button.dataset.actionIndex);
-      const rowIndex = Number(button.dataset.rowIndex);
+      const rowId = Number(button.dataset.rowId);
       const action = actions[actionIndex];
-      const row = rowsRef.current[rowIndex];
+      const row = rowMap.get(rowId);
 
       if (!action || !row) {
         return;
@@ -213,13 +216,15 @@ export function DataTable<T>({
     columns,
     data,
     emptyMessage,
+    getRowId,
+    onSelectionChange,
     order,
     pageLength,
+    rowMap,
     searchPlaceholder,
     selectable,
-    getRowId,
     selectedRowIds,
-    onSelectionChange,
+    visibleRowIds,
   ]);
 
   return (
