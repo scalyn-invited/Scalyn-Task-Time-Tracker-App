@@ -214,6 +214,28 @@ let UserManagementService = class UserManagementService {
             isActive: false,
         };
     }
+    async bulkUpdateStatus(currentUser, dto) {
+        this.ensureAdmin(currentUser);
+        if (dto.userIds.includes(currentUser.id) && dto.isActive === false) {
+            throw new common_1.ForbiddenException('You cannot deactivate your own account');
+        }
+        const users = await this.prisma.user.findMany({
+            where: {
+                id: { in: dto.userIds },
+            },
+            select: { id: true },
+        });
+        if (users.length !== dto.userIds.length) {
+            throw new common_1.NotFoundException('One or more users were not found');
+        }
+        await this.prisma.user.updateMany({
+            where: {
+                id: { in: dto.userIds },
+            },
+            data: { isActive: dto.isActive },
+        });
+        return { count: dto.userIds.length };
+    }
     async findAccessibleUser(currentUser, userId) {
         const user = await this.findUserOrFail(userId);
         if (currentUser.systemRole === 'admin') {

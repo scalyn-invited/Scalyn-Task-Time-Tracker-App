@@ -18,6 +18,8 @@ import { Request } from 'express';
 import type { Task } from '../generated/prisma';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SafeUser } from '../auth/types/auth.types';
+import { BulkTaskIdsDto } from './dto/bulk-task-ids.dto';
+import { BulkUpdateTasksDto } from './dto/bulk-update-tasks.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { ListTasksQueryDto } from './dto/list-tasks.query.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -59,6 +61,15 @@ export class TaskController {
     return this.taskService.create(req.user, dto);
   }
 
+  @Put('bulk')
+  @Header('Cache-Control', 'no-store')
+  async bulkUpdate(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: BulkUpdateTasksDto,
+  ) {
+    return this.taskService.bulkUpdate(req.user, dto);
+  }
+
   @Put(':id')
   @Header('Cache-Control', 'no-store')
   async update(
@@ -67,6 +78,16 @@ export class TaskController {
     @Body() dto: UpdateTaskDto,
   ) {
     return this.taskService.update(req.user, id, dto);
+  }
+
+  @Delete('bulk')
+  @Header('Cache-Control', 'no-store')
+  @HttpCode(HttpStatus.OK)
+  async bulkRemove(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: BulkTaskIdsDto,
+  ) {
+    return this.taskService.bulkRemove(req.user, dto.taskIds);
   }
 
   @Delete(':id')

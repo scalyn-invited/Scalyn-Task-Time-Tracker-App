@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimesheetController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const bulk_time_entry_ids_dto_1 = require("./dto/bulk-time-entry-ids.dto");
+const bulk_update_time_entries_dto_1 = require("./dto/bulk-update-time-entries.dto");
 const timesheet_query_dto_1 = require("./dto/timesheet-query.dto");
 const update_time_entry_dto_1 = require("./dto/update-time-entry.dto");
 const timesheet_service_1 = require("./timesheet.service");
@@ -26,8 +28,14 @@ let TimesheetController = class TimesheetController {
     async list(req, query) {
         return this.timesheetService.list(req.user, query);
     }
+    async bulkUpdate(req, dto) {
+        return this.timesheetService.bulkUpdate(req.user, dto);
+    }
     async update(req, id, dto) {
         return this.timesheetService.update(req.user, id, dto);
+    }
+    async bulkRemove(req, dto) {
+        return this.timesheetService.bulkRemove(req.user, dto.timeEntryIds);
     }
     async remove(req, id) {
         return this.timesheetService.remove(req.user, id);
@@ -44,6 +52,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TimesheetController.prototype, "list", null);
 __decorate([
+    (0, common_1.Patch)('bulk'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, bulk_update_time_entries_dto_1.BulkUpdateTimeEntriesDto]),
+    __metadata("design:returntype", Promise)
+], TimesheetController.prototype, "bulkUpdate", null);
+__decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.Header)('Cache-Control', 'no-store'),
     __param(0, (0, common_1.Req)()),
@@ -53,6 +70,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number, update_time_entry_dto_1.UpdateTimeEntryDto]),
     __metadata("design:returntype", Promise)
 ], TimesheetController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)('bulk'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, bulk_time_entry_ids_dto_1.BulkTimeEntryIdsDto]),
+    __metadata("design:returntype", Promise)
+], TimesheetController.prototype, "bulkRemove", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.Header)('Cache-Control', 'no-store'),

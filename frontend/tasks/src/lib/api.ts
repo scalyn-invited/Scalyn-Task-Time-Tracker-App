@@ -169,6 +169,20 @@ export function deleteTask(taskId: number): Promise<TaskRecord> {
   });
 }
 
+export function bulkUpdateTasks(values: { taskIds: number[]; changes: Partial<Pick<TaskFormValues, 'status' | 'priority'>> }): Promise<{ count: number }> {
+  return request<{ count: number }>('/api/tasks/bulk', {
+    method: 'PUT',
+    body: JSON.stringify(values),
+  });
+}
+
+export function bulkDeleteTasks(taskIds: number[]): Promise<{ count: number }> {
+  return request<{ count: number }>('/api/tasks/bulk', {
+    method: 'DELETE',
+    body: JSON.stringify({ taskIds }),
+  });
+}
+
 export function fetchTaskAttachments(taskId: number): Promise<TaskAttachment[]> {
   return request<TaskAttachment[]>(`/api/tasks/${taskId}/attachments`);
 }

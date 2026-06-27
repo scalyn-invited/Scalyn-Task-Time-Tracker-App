@@ -17,6 +17,7 @@ import { Request } from 'express';
 import type { Client } from '../generated/prisma';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SafeUser } from '../auth/types/auth.types';
+import { BulkClientIdsDto } from './dto/bulk-client-ids.dto';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { ClientService } from './client.service';
@@ -70,6 +71,15 @@ export class ClientController {
     return this.clientService.update(req.user.id, id, dto);
   }
 
+  @Patch('bulk/archive')
+  @Header('Cache-Control', 'no-store')
+  async bulkArchive(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: BulkClientIdsDto,
+  ) {
+    return this.clientService.bulkArchive(req.user.id, dto.clientIds);
+  }
+
   @Patch(':id/archive')
   @Header('Cache-Control', 'no-store')
   async archive(
@@ -77,6 +87,15 @@ export class ClientController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<Client> {
     return this.clientService.archive(req.user.id, id);
+  }
+
+  @Patch('bulk/restore')
+  @Header('Cache-Control', 'no-store')
+  async bulkRestore(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: BulkClientIdsDto,
+  ) {
+    return this.clientService.bulkRestore(req.user.id, dto.clientIds);
   }
 
   @Patch(':id/restore')

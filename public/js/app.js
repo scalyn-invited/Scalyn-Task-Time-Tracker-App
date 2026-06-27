@@ -1,3 +1,5 @@
+import { renderTableActionButtonHtml } from './table-action-icons.js';
+
 (function () {
   const TOKEN_KEY = 'sttt_access_token';
   const API_BASE = '';
@@ -975,9 +977,26 @@
               const actionType = currentView === 'archived' ? 'restore' : 'archive';
 
               return `
-                <div class="client-actions">
-                  <button class="client-action client-action-edit" type="button" data-client-action="edit" data-client-id="${row.id}">Edit</button>
-                  <button class="client-action ${currentView === 'archived' ? 'client-action-restore' : 'client-action-archive'}" type="button" data-client-action="${actionType}" data-client-id="${row.id}">${actionLabel}</button>
+                <div class="table-action-group">
+                  ${renderTableActionButtonHtml({
+                    action: 'edit',
+                    ariaLabel: `Edit ${row.name}`,
+                    title: 'Edit',
+                    dataAttributes: {
+                      'client-action': 'edit',
+                      'client-id': row.id,
+                    },
+                  })}
+                  ${renderTableActionButtonHtml({
+                    action: actionType === 'restore' ? 'restore' : 'archive',
+                    ariaLabel: `${actionLabel} ${row.name}`,
+                    title: actionLabel,
+                    variant: actionType === 'restore' ? 'success' : 'default',
+                    dataAttributes: {
+                      'client-action': actionType,
+                      'client-id': row.id,
+                    },
+                  })}
                 </div>
               `;
             },
@@ -2689,9 +2708,26 @@
               }
 
               return `
-                <div class="client-actions">
-                  <button class="client-action client-action-edit" type="button" data-user-action="edit" data-user-id="${row.id}">Edit</button>
-                  <button class="client-action client-action-archive" type="button" data-user-action="delete" data-user-id="${row.id}">Delete</button>
+                <div class="table-action-group">
+                  ${renderTableActionButtonHtml({
+                    action: 'edit',
+                    ariaLabel: `Edit ${row.name}`,
+                    title: 'Edit',
+                    dataAttributes: {
+                      'user-action': 'edit',
+                      'user-id': row.id,
+                    },
+                  })}
+                  ${renderTableActionButtonHtml({
+                    action: 'delete',
+                    ariaLabel: `Delete ${row.name}`,
+                    title: 'Delete',
+                    variant: 'danger',
+                    dataAttributes: {
+                      'user-action': 'delete',
+                      'user-id': row.id,
+                    },
+                  })}
                 </div>
               `;
             },
@@ -2928,32 +2964,25 @@
 
       chips.forEach((chip) => fillProfileChip(chip, profile));
 
-      if (profile.systemRole !== 'admin') {
-        adminNavLinks.forEach((link) => {
-          link.hidden = true;
-        });
-        return;
-      }
+      const isAdmin = profile.systemRole === 'admin';
 
       adminNavLinks.forEach((link) => {
-        link.hidden = false;
+        link.hidden = !isAdmin;
       });
 
-      if (adminNavLinks.length === 0) {
-        const sidebarNav = document.querySelector('.sidebar-nav');
-        const reportsLink = sidebarNav?.querySelector('a[href="/reports"]');
+      const sidebarNav = document.querySelector('.sidebar-nav');
+      const reportsLink = sidebarNav?.querySelector('a[href="/reports"]');
 
-        if (sidebarNav && reportsLink && !sidebarNav.querySelector('a[href="/users"]')) {
-          const usersLink = document.createElement('a');
-          usersLink.className = 'sidebar-link';
-          usersLink.setAttribute('href', '/users');
-          usersLink.setAttribute('data-admin-nav-link', '');
-          usersLink.innerHTML = `
-            <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0m12 7a7 7 0 0 0-16 0m6-7h4" /></svg></span>
-            <span>Users</span>
-          `;
-          sidebarNav.insertBefore(usersLink, reportsLink);
-        }
+      if (isAdmin && sidebarNav && reportsLink && !sidebarNav.querySelector('a[href="/users"]')) {
+        const usersLink = document.createElement('a');
+        usersLink.className = 'sidebar-link';
+        usersLink.setAttribute('href', '/users');
+        usersLink.setAttribute('data-admin-nav-link', '');
+        usersLink.innerHTML = `
+          <span class="icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0m12 7a7 7 0 0 0-16 0m6-7h4" /></svg></span>
+          <span>Users</span>
+        `;
+        sidebarNav.insertBefore(usersLink, reportsLink);
       }
 
       syncSidebarNavigation();

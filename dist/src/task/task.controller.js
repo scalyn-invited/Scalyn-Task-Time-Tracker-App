@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TaskController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const bulk_task_ids_dto_1 = require("./dto/bulk-task-ids.dto");
+const bulk_update_tasks_dto_1 = require("./dto/bulk-update-tasks.dto");
 const create_task_dto_1 = require("./dto/create-task.dto");
 const list_tasks_query_dto_1 = require("./dto/list-tasks.query.dto");
 const update_task_dto_1 = require("./dto/update-task.dto");
@@ -33,8 +35,14 @@ let TaskController = class TaskController {
     async create(req, dto) {
         return this.taskService.create(req.user, dto);
     }
+    async bulkUpdate(req, dto) {
+        return this.taskService.bulkUpdate(req.user, dto);
+    }
     async update(req, id, dto) {
         return this.taskService.update(req.user, id, dto);
+    }
+    async bulkRemove(req, dto) {
+        return this.taskService.bulkRemove(req.user, dto.taskIds);
     }
     async remove(req, id) {
         return this.taskService.remove(req.user, id);
@@ -69,6 +77,15 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TaskController.prototype, "create", null);
 __decorate([
+    (0, common_1.Put)('bulk'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, bulk_update_tasks_dto_1.BulkUpdateTasksDto]),
+    __metadata("design:returntype", Promise)
+], TaskController.prototype, "bulkUpdate", null);
+__decorate([
     (0, common_1.Put)(':id'),
     (0, common_1.Header)('Cache-Control', 'no-store'),
     __param(0, (0, common_1.Req)()),
@@ -78,6 +95,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number, update_task_dto_1.UpdateTaskDto]),
     __metadata("design:returntype", Promise)
 ], TaskController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)('bulk'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, bulk_task_ids_dto_1.BulkTaskIdsDto]),
+    __metadata("design:returntype", Promise)
+], TaskController.prototype, "bulkRemove", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.Header)('Cache-Control', 'no-store'),

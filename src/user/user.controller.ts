@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SystemRoles } from '../auth/decorators/system-roles.decorator';
 import { SystemRolesGuard } from '../auth/guards/system-roles.guard';
 import { SafeUser } from '../auth/types/auth.types';
+import { BulkUpdateUserStatusDto } from './dto/bulk-update-user-status.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
@@ -92,6 +93,16 @@ export class UserController {
     @Body() dto: UpdateUserAdminDto,
   ): Promise<SafeUser> {
     return this.userService.updateUser(req.user, id, dto);
+  }
+
+  @Put('bulk/status')
+  @UseGuards(SystemRolesGuard)
+  @SystemRoles('admin')
+  async bulkUpdateStatus(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: BulkUpdateUserStatusDto,
+  ) {
+    return this.userService.bulkUpdateStatus(req.user, dto);
   }
 
   @Put(':id/status')

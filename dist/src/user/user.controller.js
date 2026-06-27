@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const system_roles_decorator_1 = require("../auth/decorators/system-roles.decorator");
 const system_roles_guard_1 = require("../auth/guards/system-roles.guard");
+const bulk_update_user_status_dto_1 = require("./dto/bulk-update-user-status.dto");
 const change_password_dto_1 = require("./dto/change-password.dto");
 const create_user_dto_1 = require("./dto/create-user.dto");
 const update_user_admin_dto_1 = require("./dto/update-user-admin.dto");
@@ -48,6 +49,9 @@ let UserController = class UserController {
     }
     async updateUser(req, id, dto) {
         return this.userService.updateUser(req.user, id, dto);
+    }
+    async bulkUpdateStatus(req, dto) {
+        return this.userService.bulkUpdateStatus(req.user, dto);
     }
     async updateStatus(req, id, dto) {
         return this.userService.updateStatus(req.user, id, dto);
@@ -121,6 +125,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number, update_user_admin_dto_1.UpdateUserAdminDto]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "updateUser", null);
+__decorate([
+    (0, common_1.Put)('bulk/status'),
+    (0, common_1.UseGuards)(system_roles_guard_1.SystemRolesGuard),
+    (0, system_roles_decorator_1.SystemRoles)('admin'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, bulk_update_user_status_dto_1.BulkUpdateUserStatusDto]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "bulkUpdateStatus", null);
 __decorate([
     (0, common_1.Put)(':id/status'),
     (0, common_1.UseGuards)(system_roles_guard_1.SystemRolesGuard),

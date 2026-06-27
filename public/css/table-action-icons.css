@@ -1,0 +1,62 @@
+.table-action-group {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.table-action-button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(47, 124, 246, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #2f7cf6;
+  box-shadow: 0 10px 24px rgba(35, 57, 83, 0.08);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.table-action-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(47, 124, 246, 0.3);
+  background: rgba(47, 124, 246, 0.08);
+}
+
+.table-action-button:focus-visible {
+  outline: 3px solid rgba(47, 124, 246, 0.18);
+  outline-offset: 2px;
+}
+
+.table-action-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.table-action-button-danger {
+  color: #e05f4f;
+  border-color: rgba(224, 95, 79, 0.18);
+}
+
+.table-action-button-danger:hover {
+  border-color: rgba(224, 95, 79, 0.28);
+  background: rgba(224, 95, 79, 0.08);
+}
+
+.table-action-button-success {
+  color: #1e8f58;
+  border-color: rgba(56, 186, 115, 0.18);
+}
+
+.table-action-button-success:hover {
+  border-color: rgba(56, 186, 115, 0.28);
+  background: rgba(56, 186, 115, 0.08);
+}

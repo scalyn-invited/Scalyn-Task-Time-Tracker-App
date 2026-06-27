@@ -90,6 +90,11 @@ export interface TaskFormValues {
   descriptionHtml: string;
 }
 
+export interface BulkTaskUpdateValues {
+  taskIds: number[];
+  changes: Partial<Pick<TaskFormValues, 'status' | 'priority'>>;
+}
+
 export interface TimeEntry {
   id: number;
   userId: number;

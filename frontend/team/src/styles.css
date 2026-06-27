@@ -1,3 +1,5 @@
+@import url("../../../public/css/table-action-icons.css");
+
 :root {
   color-scheme: light;
   --team-bg: #eef4ff;
@@ -226,8 +228,49 @@ textarea {
   color: var(--team-accent-2);
 }
 
-.team-danger {
+.team-icon-action {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(43, 107, 255, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--team-accent-2);
+  box-shadow: 0 10px 24px rgba(30, 53, 94, 0.08);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.team-icon-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(43, 107, 255, 0.28);
+  background: rgba(43, 107, 255, 0.08);
+}
+
+.team-icon-action:focus-visible {
+  outline: 3px solid rgba(43, 107, 255, 0.18);
+  outline-offset: 2px;
+}
+
+.team-icon-action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.team-icon-action-danger {
   color: var(--team-danger);
+  border-color: rgba(204, 59, 59, 0.18);
+}
+
+.team-icon-action-danger:hover {
+  border-color: rgba(204, 59, 59, 0.28);
+  background: rgba(204, 59, 59, 0.08);
 }
 
 .team-modal-root {
@@ -268,7 +311,8 @@ textarea {
 .team-row-actions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .team-check {

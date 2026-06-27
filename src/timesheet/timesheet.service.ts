@@ -7,6 +7,7 @@ import type { Prisma as PrismaTypes } from '../generated/prisma';
 import { TimeEntryStatus } from '../prisma/prisma-client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SafeUser } from '../auth/types/auth.types';
+import { BulkUpdateTimeEntriesDto } from './dto/bulk-update-time-entries.dto';
 import { TimesheetQueryDto } from './dto/timesheet-query.dto';
 import { UpdateTimeEntryDto } from './dto/update-time-entry.dto';
 import {
@@ -164,6 +165,61 @@ export class TimesheetService {
     });
 
     return this.toEntryResponse(deleted);
+  }
+
+  async bulkUpdate(user: SafeUser, dto: BulkUpdateTimeEntriesDto): Promise<{ count: number }> {
+    if (!dto.changes || (dto.changes.clientId === undefined && dto.changes.taskId === undefined)) {
+      throw new BadRequestException('At least one change must be provided');
+    }
+
+    const entries = await this.prisma.timeEntry.findMany({
+      where: {
+        id: { in: dto.timeEntryIds },
+        status: TimeEntryStatus.COMPLETED,
+        client: { userId: user.id },
+      },
+      select: this.timeEntrySelect,
+    });
+
+    if (entries.length !== dto.timeEntryIds.length) {
+      throw new NotFoundException('One or more time entries were not found');
+    }
+
+    for (const entry of entries) {
+      const nextClientId = dto.changes.clientId ?? entry.clientId;
+      const nextTaskId = dto.changes.taskId ?? entry.taskId;
+      await this.findOwnedTaskAndClientOrFail(user.id, nextClientId, nextTaskId);
+      await this.prisma.timeEntry.update({
+        where: { id: entry.id },
+        data: {
+          client: { connect: { id: nextClientId } },
+          task: { connect: { id: nextTaskId } },
+        },
+      });
+    }
+
+    return { count: dto.timeEntryIds.length };
+  }
+
+  async bulkRemove(user: SafeUser, timeEntryIds: number[]): Promise<{ count: number }> {
+    const entries = await this.prisma.timeEntry.findMany({
+      where: {
+        id: { in: timeEntryIds },
+        status: TimeEntryStatus.COMPLETED,
+        client: { userId: user.id },
+      },
+      select: { id: true },
+    });
+
+    if (entries.length !== timeEntryIds.length) {
+      throw new NotFoundException('One or more time entries were not found');
+    }
+
+    await this.prisma.timeEntry.deleteMany({
+      where: { id: { in: timeEntryIds } },
+    });
+
+    return { count: timeEntryIds.length };
   }
 
   private buildWhereClause(

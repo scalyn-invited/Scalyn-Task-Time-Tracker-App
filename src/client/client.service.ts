@@ -101,6 +101,48 @@ export class ClientService {
     return this.archive(userId, clientId);
   }
 
+  async bulkArchive(userId: number, clientIds: number[]): Promise<{ count: number }> {
+    const clients = await this.prisma.client.findMany({
+      where: {
+        id: { in: clientIds },
+        userId,
+      },
+      select: { id: true },
+    });
+
+    if (clients.length !== clientIds.length) {
+      throw new NotFoundException('One or more clients were not found');
+    }
+
+    await this.prisma.client.updateMany({
+      where: { id: { in: clientIds } },
+      data: { archivedAt: new Date() },
+    });
+
+    return { count: clientIds.length };
+  }
+
+  async bulkRestore(userId: number, clientIds: number[]): Promise<{ count: number }> {
+    const clients = await this.prisma.client.findMany({
+      where: {
+        id: { in: clientIds },
+        userId,
+      },
+      select: { id: true },
+    });
+
+    if (clients.length !== clientIds.length) {
+      throw new NotFoundException('One or more clients were not found');
+    }
+
+    await this.prisma.client.updateMany({
+      where: { id: { in: clientIds } },
+      data: { archivedAt: null },
+    });
+
+    return { count: clientIds.length };
+  }
+
   private async findOwnedClientOrFail(
     userId: number,
     clientId: number,

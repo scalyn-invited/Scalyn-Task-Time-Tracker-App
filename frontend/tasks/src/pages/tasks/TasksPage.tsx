@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
+  bulkDeleteTasks,
+  bulkUpdateTasks,
   createTask,
   deleteTask,
   fetchActiveTimer,
@@ -14,7 +16,8 @@ import { TaskDataTable } from '../../components/tasks/TaskDataTable';
 import { ConfirmModal } from '../../components/modals/ConfirmModal';
 import { CreateTaskModal } from '../../modals/CreateTaskModal';
 import { EditTaskModal } from '../../modals/EditTaskModal';
-import type { Client, SafeUser, TaskFormValues, TaskLabel, TaskRecord, TimeEntry } from '../../types';
+import { BulkActionToolbar } from '../../../../shared/components/BulkActionToolbar';
+import type { Client, SafeUser, TaskFormValues, TaskLabel, TaskRecord, TimeEntry, TaskPriority, TaskStatus } from '../../types';
 
 export function TasksPage() {
   const [tasks, setTasks] = useState<TaskRecord[]>([]);
@@ -29,6 +32,11 @@ export function TasksPage() {
   const [editingTask, setEditingTask] = useState<TaskRecord | null>(null);
   const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<TaskRecord | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState<TaskStatus | ''>('');
+  const [bulkPriority, setBulkPriority] = useState<TaskPriority | ''>('');
 
   const loadPage = async (filters: { clientId?: number; userId?: number } = {}) => {
     setIsLoading(true);
@@ -44,6 +52,7 @@ export function TasksPage() {
       setClients(nextClients);
       setUsers(nextUsers);
       setLabels(nextLabels);
+      setSelectedTaskIds([]);
       setFeedback('');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to load tasks';
@@ -114,6 +123,45 @@ export function TasksPage() {
       await loadPage({ clientId: selectedClientId, userId: selectedUserId });
     } catch (error: unknown) {
       setFeedback(error instanceof Error ? error.message : 'Unable to delete task');
+    }
+  };
+
+  const submitBulkUpdate = async () => {
+    const changes: Partial<Pick<TaskFormValues, 'status' | 'priority'>> = {};
+
+    if (bulkStatus) {
+      changes.status = bulkStatus;
+    }
+
+    if (bulkPriority) {
+      changes.priority = bulkPriority;
+    }
+
+    if (Object.keys(changes).length === 0) {
+      setFeedback('Select at least one field to update.');
+      return;
+    }
+
+    try {
+      await bulkUpdateTasks({ taskIds: selectedTaskIds, changes });
+      setBulkUpdateOpen(false);
+      setBulkStatus('');
+      setBulkPriority('');
+      setFeedback(`${selectedTaskIds.length} tasks updated successfully.`);
+      await loadPage({ clientId: selectedClientId, userId: selectedUserId });
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to bulk update tasks');
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      await bulkDeleteTasks(selectedTaskIds);
+      setBulkDeleteOpen(false);
+      setFeedback(`${selectedTaskIds.length} tasks deleted successfully.`);
+      await loadPage({ clientId: selectedClientId, userId: selectedUserId });
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to bulk delete tasks');
     }
   };
 
@@ -195,6 +243,15 @@ export function TasksPage() {
         </div>
       </section>
 
+      <BulkActionToolbar
+        count={selectedTaskIds.length}
+        onClear={() => setSelectedTaskIds([])}
+        actions={[
+          { key: 'bulk-update', label: 'Bulk update', onClick: () => setBulkUpdateOpen(true) },
+          { key: 'bulk-delete', label: 'Bulk delete', variant: 'danger', onClick: () => setBulkDeleteOpen(true) },
+        ]}
+      />
+
       <section className="card-panel tasks-table-panel">
         <div className="panel-head">
           <div>
@@ -207,6 +264,8 @@ export function TasksPage() {
             tasks={tasks}
             labels={labels}
             activeTimer={activeTimer}
+            selectedTaskIds={selectedTaskIds}
+            onSelectionChange={setSelectedTaskIds}
             overlayDismissKey={`${isCreateOpen}-${editingTask?.id ?? 'closed'}`}
             onEdit={(task) => setEditingTask(task)}
             onDelete={(task) => setPendingDeleteTask(task)}
@@ -236,6 +295,47 @@ export function TasksPage() {
           onSubmit={(values) => saveExistingTask(editingTask, values)}
         />
       ) : null}
+
+      {bulkUpdateOpen ? (
+        <div className="client-modal" onClick={() => setBulkUpdateOpen(false)}>
+          <div className="client-modal-overlay">
+            <section className="client-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bulk-task-update-title" onClick={(event) => event.stopPropagation()}>
+              <header className="client-modal-header">
+                <div>
+                  <p className="route-eyebrow">Tasks</p>
+                  <h2 id="bulk-task-update-title">Bulk update tasks</h2>
+                  <p className="client-modal-subtitle">Update status and/or priority for the selected tasks.</p>
+                </div>
+                <button className="modal-close-button" type="button" onClick={() => setBulkUpdateOpen(false)} aria-label="Close bulk update modal"><span aria-hidden="true">&times;</span></button>
+              </header>
+              <div className="client-modal-body">
+                <section className="client-modal-panel">
+                  <form className="client-form" onSubmit={(event) => { event.preventDefault(); void submitBulkUpdate(); }}>
+                    <div className="field"><label htmlFor="bulk-task-status">Status</label><select id="bulk-task-status" value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value as TaskStatus | '')}><option value="">No change</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In Progress</option><option value="TO_REVIEW">To Review</option><option value="COMPLETED">Completed</option><option value="ON_HOLD">On Hold</option></select></div>
+                    <div className="field"><label htmlFor="bulk-task-priority">Priority</label><select id="bulk-task-priority" value={bulkPriority} onChange={(event) => setBulkPriority(event.target.value as TaskPriority | '')}><option value="">No change</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></div>
+                    <div className="form-actions"><button className="btn btn-primary" type="submit">Apply changes</button><button className="btn btn-secondary" type="button" onClick={() => setBulkUpdateOpen(false)}>Cancel</button></div>
+                  </form>
+                </section>
+              </div>
+            </section>
+          </div>
+        </div>
+      ) : null}
+
+      <ConfirmModal
+        open={bulkDeleteOpen}
+        title="Delete selected tasks?"
+        message={<>Delete {selectedTaskIds.length} selected tasks? This action cannot be undone.</>}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        titleId="task-bulk-delete-confirm-title"
+        messageId="task-bulk-delete-confirm-message"
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => {
+          void confirmBulkDelete();
+        }}
+      />
 
       <ConfirmModal
         open={Boolean(pendingDeleteTask)}

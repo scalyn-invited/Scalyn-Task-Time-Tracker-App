@@ -16,6 +16,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { BulkUpdateUserStatusDto } from './dto/bulk-update-user-status.dto';
 
 type UserRecord = Pick<User, 'id' | 'name' | 'email' | 'password' | 'systemRole' | 'isActive' | 'createdAt' | 'updatedAt'>;
 
@@ -221,6 +222,34 @@ export class UserManagementService {
       ...this.toSafeUser(user),
       isActive: false,
     };
+  }
+
+  async bulkUpdateStatus(currentUser: SafeUser, dto: BulkUpdateUserStatusDto): Promise<{ count: number }> {
+    this.ensureAdmin(currentUser);
+
+    if (dto.userIds.includes(currentUser.id) && dto.isActive === false) {
+      throw new ForbiddenException('You cannot deactivate your own account');
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: dto.userIds },
+      },
+      select: { id: true },
+    });
+
+    if (users.length !== dto.userIds.length) {
+      throw new NotFoundException('One or more users were not found');
+    }
+
+    await this.prisma.user.updateMany({
+      where: {
+        id: { in: dto.userIds },
+      },
+      data: { isActive: dto.isActive },
+    });
+
+    return { count: dto.userIds.length };
   }
 
   private async findAccessibleUser(currentUser: SafeUser, userId: number): Promise<UserRecord> {

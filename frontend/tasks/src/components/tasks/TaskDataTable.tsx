@@ -5,12 +5,15 @@ import { Link } from 'react-router-dom';
 import { TaskPriorityBadge, TaskStatusBadge } from './TaskStatusBadge';
 import { TaskFieldPopover } from './TaskFieldPopover';
 import { formatDuration } from '../../lib/format';
+import { TableActionIconButton } from '../../../../shared/components/TableActionIconButton';
 import type { TaskFormValues, TaskLabel, TaskRecord, TimeEntry } from '../../types';
 
 interface TaskDataTableProps {
   tasks: TaskRecord[];
   labels: TaskLabel[];
   activeTimer: TimeEntry | null;
+  selectedTaskIds: number[];
+  onSelectionChange: (taskIds: number[]) => void;
   onEdit: (task: TaskRecord) => void;
   onDelete: (task: TaskRecord) => void;
   onUpdateLabels: (task: TaskRecord, labels: string[]) => Promise<void>;
@@ -91,6 +94,8 @@ export function TaskDataTable({
   tasks,
   labels,
   activeTimer,
+  selectedTaskIds,
+  onSelectionChange,
   onEdit,
   onDelete,
   onUpdateLabels,
@@ -274,6 +279,14 @@ export function TaskDataTable({
         <table ref={tableRef} className="display compact task-table" style={{ width: '100%' }}>
           <thead>
             <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id))}
+                  onChange={(event) => onSelectionChange(event.target.checked ? tasks.map((task) => task.id) : [])}
+                  aria-label="Select all tasks"
+                />
+              </th>
               <th>Task</th>
               <th>Client</th>
               <th>Status</th>
@@ -285,6 +298,20 @@ export function TaskDataTable({
           <tbody>
             {tasks.map((task) => (
               <tr key={task.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedTaskIds.includes(task.id)}
+                    onChange={(event) => {
+                      onSelectionChange(
+                        event.target.checked
+                          ? [...new Set([...selectedTaskIds, task.id])]
+                          : selectedTaskIds.filter((id) => id !== task.id),
+                      );
+                    }}
+                    aria-label={`Select ${task.title}`}
+                  />
+                </td>
                 <td>
                   <div className="task-cell-main">
                     <div className="task-row-title">
@@ -367,41 +394,28 @@ export function TaskDataTable({
                   </button>
                 </td>
                 <td>
-                  <div className="table-actions task-table-actions">
-                    <button
-                      type="button"
-                      className="task-icon-action"
-                      aria-label={`Edit ${task.title}`}
+                  <div className="table-action-group">
+                    <TableActionIconButton
+                      action="edit"
+                      label={`Edit ${task.title}`}
                       title="Edit"
                       onClick={() => {
                         closeLabelOverlay();
                         closeFieldEditor();
                         onEdit(task);
                       }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className="task-icon-action task-icon-action-danger"
-                      aria-label={`Delete ${task.title}`}
+                    />
+                    <TableActionIconButton
+                      action="delete"
+                      label={`Delete ${task.title}`}
                       title="Delete"
+                      variant="danger"
                       onClick={() => {
                         closeLabelOverlay();
                         closeFieldEditor();
                         onDelete(task);
                       }}
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M3 6h18" />
-                        <path d="M8 6V4h8v2" />
-                        <path d="M19 6l-1 14H6L5 6" />
-                        <path d="M10 11v6M14 11v6" />
-                      </svg>
-                    </button>
+                    />
                   </div>
                 </td>
               </tr>

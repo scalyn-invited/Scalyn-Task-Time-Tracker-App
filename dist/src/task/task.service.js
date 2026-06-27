@@ -164,6 +164,53 @@ let TaskService = class TaskService {
             },
         });
     }
+    async bulkUpdate(user, dto) {
+        if (!dto.changes || (dto.changes.priority === undefined && dto.changes.status === undefined)) {
+            throw new common_1.BadRequestException('At least one change must be provided');
+        }
+        const tasks = await this.prisma.task.findMany({
+            where: {
+                id: { in: dto.taskIds },
+                client: { userId: user.id },
+            },
+            include: {
+                client: true,
+                user: true,
+                labels: true,
+            },
+        });
+        if (tasks.length !== dto.taskIds.length) {
+            throw new common_1.NotFoundException('One or more tasks were not found');
+        }
+        await this.prisma.task.updateMany({
+            where: {
+                id: { in: dto.taskIds },
+            },
+            data: {
+                ...(dto.changes.priority !== undefined ? { priority: dto.changes.priority } : {}),
+                ...(dto.changes.status !== undefined ? { status: dto.changes.status } : {}),
+            },
+        });
+        return { count: dto.taskIds.length };
+    }
+    async bulkRemove(user, taskIds) {
+        const tasks = await this.prisma.task.findMany({
+            where: {
+                id: { in: taskIds },
+                client: { userId: user.id },
+            },
+            select: { id: true },
+        });
+        if (tasks.length !== taskIds.length) {
+            throw new common_1.NotFoundException('One or more tasks were not found');
+        }
+        await this.prisma.task.deleteMany({
+            where: {
+                id: { in: taskIds },
+            },
+        });
+        return { count: taskIds.length };
+    }
     async getOwnedTaskById(user, taskId) {
         return this.findOwnedTaskOrFail(user.id, taskId);
     }

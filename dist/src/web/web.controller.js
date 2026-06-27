@@ -14,87 +14,56 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WebController = void 0;
 const common_1 = require("@nestjs/common");
-const fs_1 = require("fs");
 const path_1 = require("path");
 let WebController = class WebController {
     publicRoot = (0, path_1.join)(process.cwd(), 'public');
-    async servePage(res, fileName) {
-        res.sendFile((0, path_1.join)(this.publicRoot, fileName));
+    async serveSpa(res) {
+        res.sendFile((0, path_1.join)(this.publicRoot, 'app', 'index.html'));
     }
     async index(res) {
-        res.redirect(302, '/timer');
+        await this.serveSpa(res);
     }
     async login(res) {
-        await this.servePage(res, 'login.html');
+        await this.serveSpa(res);
     }
     async register(res) {
-        await this.servePage(res, 'register.html');
+        await this.serveSpa(res);
     }
     async profile(res) {
-        await this.servePage(res, 'profile.html');
+        await this.serveSpa(res);
     }
     async timer(res) {
-        const reactTimerIndex = (0, path_1.join)(this.publicRoot, 'timer-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactTimerIndex)) {
-            res.sendFile(reactTimerIndex);
-            return;
-        }
-        await this.servePage(res, 'timer.html');
+        await this.serveSpa(res);
     }
     async timesheets(res) {
-        await this.servePage(res, 'timesheets.html');
+        await this.serveSpa(res);
     }
     async reports(res) {
-        const reactReportsIndex = (0, path_1.join)(this.publicRoot, 'reports-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactReportsIndex)) {
-            res.sendFile(reactReportsIndex);
-            return;
-        }
-        await this.servePage(res, 'reports.html');
+        await this.serveSpa(res);
     }
     async clients(res) {
-        await this.servePage(res, 'clients.html');
+        await this.serveSpa(res);
     }
     async users(res) {
-        await this.servePage(res, 'users.html');
+        await this.serveSpa(res);
     }
     async clientDetails(res) {
-        await this.servePage(res, 'clients.html');
+        await this.serveSpa(res);
     }
     async tasks(res) {
-        const reactTasksIndex = (0, path_1.join)(this.publicRoot, 'tasks-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactTasksIndex)) {
-            res.sendFile(reactTasksIndex);
-            return;
-        }
-        await this.servePage(res, 'tasks.html');
+        await this.serveSpa(res);
     }
     async taskDetails(res) {
-        const reactTasksIndex = (0, path_1.join)(this.publicRoot, 'tasks-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactTasksIndex)) {
-            res.sendFile(reactTasksIndex);
-            return;
-        }
-        await this.servePage(res, 'tasks.html');
+        await this.serveSpa(res);
     }
     async team(res) {
-        const reactTeamIndex = (0, path_1.join)(this.publicRoot, 'team-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactTeamIndex)) {
-            res.sendFile(reactTeamIndex);
-            return;
-        }
-        await this.servePage(res, 'team.html');
+        await this.serveSpa(res);
     }
     async teamDeepLink(res) {
-        const reactTeamIndex = (0, path_1.join)(this.publicRoot, 'team-app', 'index.html');
-        if ((0, fs_1.existsSync)(reactTeamIndex)) {
-            res.sendFile(reactTeamIndex);
-            return;
-        }
-        await this.servePage(res, 'team.html');
+        await this.serveSpa(res);
     }
     async settings(res) {
-        await this.servePage(res, 'settings.html');
+        await this.serveSpa(res);
     }
 };
 exports.WebController = WebController;

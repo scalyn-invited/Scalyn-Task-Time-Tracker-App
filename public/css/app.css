@@ -1,3 +1,5 @@
+@import url("./table-action-icons.css");
+
 :root {
   color-scheme: light;
   --bg: #f4f7fb;
@@ -1815,7 +1817,8 @@ button {
 .client-actions {
   display: inline-flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .user-create-only,
@@ -1840,6 +1843,24 @@ button {
 
 .client-action:hover {
   border-color: rgba(47, 124, 246, 0.3);
+}
+
+.client-action-icon {
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+.client-action-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .client-action-edit {
@@ -2255,6 +2276,32 @@ body.confirm-modal-open {
   width: 18px;
   height: 18px;
   accent-color: #2f7cf6;
+}
+
+.datatable-select-column {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+table.dataTable th.datatable-select-column,
+table.dataTable td.datatable-select-column {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+  text-align: center;
+}
+
+table.dataTable th.datatable-select-column input[type="checkbox"],
+table.dataTable td.datatable-select-column input[type="checkbox"] {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0 auto;
 }
 
 .client-form textarea {

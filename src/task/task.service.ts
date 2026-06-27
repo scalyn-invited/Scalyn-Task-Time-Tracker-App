@@ -7,6 +7,7 @@ import { TaskPriority as TaskPriorityValue, TaskStatus as TaskStatusValue } from
 import type { Prisma as PrismaTypes, Task, TaskLabel, TaskActivityAction } from '../generated/prisma';
 import { SafeUser } from '../auth/types/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkUpdateTasksDto } from './dto/bulk-update-tasks.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { ListTasksQueryDto } from './dto/list-tasks.query.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -196,6 +197,62 @@ export class TaskService {
         id: taskId,
       },
     });
+  }
+
+  async bulkUpdate(user: SafeUser, dto: BulkUpdateTasksDto): Promise<{ count: number }> {
+    if (!dto.changes || (dto.changes.priority === undefined && dto.changes.status === undefined)) {
+      throw new BadRequestException('At least one change must be provided');
+    }
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        id: { in: dto.taskIds },
+        client: { userId: user.id },
+      },
+      include: {
+        client: true,
+        user: true,
+        labels: true,
+      },
+    });
+
+    if (tasks.length !== dto.taskIds.length) {
+      throw new NotFoundException('One or more tasks were not found');
+    }
+
+    await this.prisma.task.updateMany({
+      where: {
+        id: { in: dto.taskIds },
+      },
+      data: {
+        ...(dto.changes.priority !== undefined ? { priority: dto.changes.priority } : {}),
+        ...(dto.changes.status !== undefined ? { status: dto.changes.status } : {}),
+      },
+    });
+
+    return { count: dto.taskIds.length };
+  }
+
+  async bulkRemove(user: SafeUser, taskIds: number[]): Promise<{ count: number }> {
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        id: { in: taskIds },
+        client: { userId: user.id },
+      },
+      select: { id: true },
+    });
+
+    if (tasks.length !== taskIds.length) {
+      throw new NotFoundException('One or more tasks were not found');
+    }
+
+    await this.prisma.task.deleteMany({
+      where: {
+        id: { in: taskIds },
+      },
+    });
+
+    return { count: taskIds.length };
   }
 
   async getOwnedTaskById(user: SafeUser, taskId: number): Promise<TaskWithRelations> {
