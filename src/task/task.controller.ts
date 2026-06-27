@@ -52,6 +52,15 @@ export class TaskController {
     return this.taskService.getOwnedTaskById(req.user, id);
   }
 
+  @Get(':id/time-logs')
+  @Header('Cache-Control', 'no-store')
+  async findTimeLogs(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.taskService.listTimeLogs(req.user, id);
+  }
+
   @Post()
   @Header('Cache-Control', 'no-store')
   async create(

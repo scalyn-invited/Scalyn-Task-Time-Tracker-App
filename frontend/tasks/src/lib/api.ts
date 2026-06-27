@@ -221,6 +221,10 @@ export function fetchTaskActivity(taskId: number): Promise<TaskActivity[]> {
   return request<TaskActivity[]>(`/api/tasks/${taskId}/activity`);
 }
 
+export function fetchTaskTimeLogs(taskId: number): Promise<TimeEntry[]> {
+  return request<TimeEntry[]>(`/api/tasks/${taskId}/time-logs`);
+}
+
 export function fetchActiveTimer(): Promise<TimeEntry | null> {
   return request<TimeEntry | null>('/timer/active');
 }
@@ -261,5 +265,24 @@ export function createManualTimeEntry(values: ManualEntryPayload): Promise<TimeE
   return request<TimeEntry>('/timer/manual', {
     method: 'POST',
     body: JSON.stringify(values),
+  });
+}
+
+export function updateTimeEntry(entryId: number, values: {
+  clientId?: number;
+  taskId?: number;
+  startTime?: string;
+  endTime?: string;
+  description?: string;
+}): Promise<TimeEntry> {
+  return request<TimeEntry>(`/time-entries/${entryId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(values),
+  });
+}
+
+export function deleteTimeEntry(entryId: number): Promise<{ success?: boolean }> {
+  return request<{ success?: boolean }>(`/time-entries/${entryId}`, {
+    method: 'DELETE',
   });
 }

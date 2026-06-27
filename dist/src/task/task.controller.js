@@ -32,6 +32,9 @@ let TaskController = class TaskController {
     async findOne(req, id) {
         return this.taskService.getOwnedTaskById(req.user, id);
     }
+    async findTimeLogs(req, id) {
+        return this.taskService.listTimeLogs(req.user, id);
+    }
     async create(req, dto) {
         return this.taskService.create(req.user, dto);
     }
@@ -67,6 +70,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number]),
     __metadata("design:returntype", Promise)
 ], TaskController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Get)(':id/time-logs'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", Promise)
+], TaskController.prototype, "findTimeLogs", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.Header)('Cache-Control', 'no-store'),

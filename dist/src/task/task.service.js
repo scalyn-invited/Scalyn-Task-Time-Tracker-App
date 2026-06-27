@@ -214,6 +214,28 @@ let TaskService = class TaskService {
     async getOwnedTaskById(user, taskId) {
         return this.findOwnedTaskOrFail(user.id, taskId);
     }
+    async listTimeLogs(user, taskId) {
+        await this.findOwnedTaskOrFail(user.id, taskId);
+        const where = {
+            taskId,
+        };
+        if (user.role === 'MEMBER') {
+            where.userId = user.id;
+        }
+        return this.prisma.timeEntry.findMany({
+            where,
+            include: {
+                task: {
+                    include: {
+                        client: true,
+                    },
+                },
+                client: true,
+                user: true,
+            },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        });
+    }
     async listAllLabels() {
         return this.prisma.taskLabel.findMany({
             orderBy: { name: 'asc' },

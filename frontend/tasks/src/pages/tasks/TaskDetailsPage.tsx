@@ -6,6 +6,7 @@ import {
   createTaskComment,
   deleteTaskAttachment,
   deleteTaskComment,
+  deleteTimeEntry,
   fetchActiveTimer,
   fetchClients,
   fetchLabels,
@@ -13,6 +14,7 @@ import {
   fetchTaskActivity,
   fetchTaskAttachments,
   fetchTaskComments,
+  fetchTaskTimeLogs,
   fetchUsers,
   fetchCurrentUser,
   pauseTimer,
@@ -21,6 +23,7 @@ import {
   stopTimer,
   updateTask,
   updateTaskComment,
+  updateTimeEntry,
 } from '../../lib/api';
 import { useTaskDetailStore } from '../../store/task-detail.store';
 import { TaskDetailsTab } from '../../components/tasks/TaskDetailsTab';
@@ -33,6 +36,8 @@ import { TaskFieldPopover } from '../../components/tasks/TaskFieldPopover';
 import { TaskDetailsTimeEntryCard } from '../../components/timer/TaskDetailsTimeEntryCard';
 import { TimerSavedModal } from '../../components/timer/TimerSavedModal';
 import { ConfirmModal } from '../../components/modals/ConfirmModal';
+import { TaskTimeLogsTab } from '../../components/tasks/TaskTimeLogsTab';
+import { TaskTimeEntryEditModal } from '../../components/tasks/TaskTimeEntryEditModal';
 import type {
   Client,
   ManualEntryPayload,
@@ -70,11 +75,21 @@ export function TaskDetailsPage() {
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [activity, setActivity] = useState<TaskActivity[]>([]);
+  const [timeLogs, setTimeLogs] = useState<TimeEntry[]>([]);
+  const [timeLogsLoading, setTimeLogsLoading] = useState(true);
+  const [editingTimeLog, setEditingTimeLog] = useState<TimeEntry | null>(null);
+  const [editTimeLogClientId, setEditTimeLogClientId] = useState('');
+  const [editTimeLogTaskId, setEditTimeLogTaskId] = useState('');
+  const [editTimeLogStartTime, setEditTimeLogStartTime] = useState('');
+  const [editTimeLogEndTime, setEditTimeLogEndTime] = useState('');
+  const [editTimeLogDescription, setEditTimeLogDescription] = useState('');
+  const [pendingDeleteTimeLogId, setPendingDeleteTimeLogId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [activeTimer, setActiveTimer] = useState<TimeEntry | null>(null);
   const [savedTimer, setSavedTimer] = useState<TimeEntry | null>(null);
   const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [pendingDeleteAttachment, setPendingDeleteAttachment] = useState<TaskAttachment | null>(null);
   const [pendingDeleteComment, setPendingDeleteComment] = useState<TaskComment | null>(null);
   const [openFieldEditor, setOpenFieldEditor] = useState<{ field: 'status' | 'priority' } | null>(null);
@@ -148,28 +163,63 @@ export function TaskDetailsPage() {
   }, [activityRefreshKey, taskId]);
 
   useEffect(() => {
+    if (!taskId) {
+      return;
+    }
+
+    setTimeLogsLoading(true);
+    void fetchTaskTimeLogs(taskId)
+      .then((rows) => {
+        setTimeLogs(rows);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        setTimeLogsLoading(false);
+      });
+  }, [taskId, activeTimer?.id, isSavedModalOpen]);
+
+  useEffect(() => {
     if (isEditing) {
       setOpenFieldEditor(null);
       fieldTriggerRef.current = null;
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    if (!editingTimeLog) {
+      setEditTimeLogClientId('');
+      setEditTimeLogTaskId('');
+      setEditTimeLogStartTime('');
+      setEditTimeLogEndTime('');
+      setEditTimeLogDescription('');
+      return;
+    }
+
+    setEditTimeLogClientId(String(editingTimeLog.clientId));
+    setEditTimeLogTaskId(String(editingTimeLog.taskId));
+    setEditTimeLogStartTime(editingTimeLog.startTime.slice(0, 16));
+    setEditTimeLogEndTime(editingTimeLog.endTime ? editingTimeLog.endTime.slice(0, 16) : '');
+    setEditTimeLogDescription(editingTimeLog.description ?? '');
+  }, [editingTimeLog]);
+
   if (!task || !currentUser) {
     return <section className="route-main"><div className="empty-state">{feedback || 'Loading task details...'}</div></section>;
   }
 
   const refreshAll = async () => {
-    const [nextTask, nextAttachments, nextComments, nextActivity] = await Promise.all([
+    const [nextTask, nextAttachments, nextComments, nextActivity, nextTimeLogs] = await Promise.all([
       fetchTask(taskId),
       fetchTaskAttachments(taskId),
       fetchTaskComments(taskId),
       fetchTaskActivity(taskId),
+      fetchTaskTimeLogs(taskId),
     ]);
 
     setTask(nextTask);
     setAttachments(nextAttachments);
     setComments(nextComments);
     setActivity(nextActivity);
+    setTimeLogs(nextTimeLogs);
   };
 
   const updateTaskField = async (field: 'status' | 'priority', value: string) => {
@@ -213,6 +263,7 @@ export function TaskDetailsPage() {
     await cancelTimer();
     setActiveTimer(null);
     setFeedback('');
+    setCancelConfirmOpen(false);
   };
 
   const saveManualEntry = async (payload: ManualEntryPayload) => {
@@ -222,6 +273,42 @@ export function TaskDetailsPage() {
     setSavedTimer(entry);
     setIsSavedModalOpen(true);
     setFeedback('');
+  };
+
+  const saveEditedTimeLog = async () => {
+    if (!editingTimeLog) {
+      return;
+    }
+
+    try {
+      await updateTimeEntry(editingTimeLog.id, {
+        clientId: editTimeLogClientId ? Number(editTimeLogClientId) : undefined,
+        taskId: editTimeLogTaskId ? Number(editTimeLogTaskId) : undefined,
+        startTime: editTimeLogStartTime ? new Date(editTimeLogStartTime).toISOString() : undefined,
+        endTime: editTimeLogEndTime ? new Date(editTimeLogEndTime).toISOString() : undefined,
+        description: editTimeLogDescription,
+      });
+      setEditingTimeLog(null);
+      setFeedback('Time entry updated successfully.');
+      await refreshAll();
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to update time entry');
+    }
+  };
+
+  const confirmDeleteTimeLog = async () => {
+    if (pendingDeleteTimeLogId === null) {
+      return;
+    }
+
+    try {
+      await deleteTimeEntry(pendingDeleteTimeLogId);
+      setPendingDeleteTimeLogId(null);
+      setFeedback('Time entry deleted successfully.');
+      await refreshAll();
+    } catch (error: unknown) {
+      setFeedback(error instanceof Error ? error.message : 'Unable to delete time entry');
+    }
   };
 
   const confirmDeleteAttachment = async () => {
@@ -333,7 +420,7 @@ export function TaskDetailsPage() {
           onPauseTimer={pauseActiveTimer}
           onResumeTimer={resumeActiveTimer}
           onStopTimer={stopActiveTimer}
-          onCancelTimer={cancelActiveTimer}
+          onCancelTimerClick={() => setCancelConfirmOpen(true)}
           onCreateManualEntry={saveManualEntry}
         />
 
@@ -341,6 +428,7 @@ export function TaskDetailsPage() {
           <div className="task-detail-tabs" role="tablist" aria-label="Task detail tabs">
             <button type="button" className={activeTab === 'details' ? 'active' : ''} onClick={() => setActiveTab('details')}>Details</button>
             <button type="button" className={activeTab === 'comments' ? 'active' : ''} onClick={() => setActiveTab('comments')}>Comments</button>
+            <button type="button" className={activeTab === 'time-logs' ? 'active' : ''} onClick={() => setActiveTab('time-logs')}>Time Logs</button>
             <button type="button" className={activeTab === 'activity' ? 'active' : ''} onClick={() => setActiveTab('activity')}>Activity Log</button>
           </div>
           {feedback ? <div className="feedback task-detail-feedback" data-tone="error">{feedback}</div> : null}
@@ -395,6 +483,19 @@ export function TaskDetailsPage() {
             </div>
           ) : null}
 
+          {activeTab === 'time-logs' ? (
+            <TaskTimeLogsTab
+              entries={timeLogs}
+              loading={timeLogsLoading}
+              onEdit={(entry) => {
+                setEditingTimeLog(entry);
+              }}
+              onDelete={(entry) => {
+                setPendingDeleteTimeLogId(entry.id);
+              }}
+            />
+          ) : null}
+
           {activeTab === 'activity' ? <ActivityTimeline activity={activity} /> : null}
         </section>
       </section>
@@ -413,6 +514,52 @@ export function TaskDetailsPage() {
           }}
         />
       ) : null}
+
+      <TaskTimeEntryEditModal
+        entry={editingTimeLog}
+        clients={clients}
+        tasks={[task, ...timeLogs.map((entry) => entry.task as unknown as TaskRecord).filter((candidate, index, list) => list.findIndex((item) => item.id === candidate.id) === index)]}
+        editClientId={editTimeLogClientId}
+        editTaskId={editTimeLogTaskId}
+        editStartTime={editTimeLogStartTime}
+        editEndTime={editTimeLogEndTime}
+        editDescription={editTimeLogDescription}
+        onClose={() => setEditingTimeLog(null)}
+        onClientChange={setEditTimeLogClientId}
+        onTaskChange={setEditTimeLogTaskId}
+        onStartTimeChange={setEditTimeLogStartTime}
+        onEndTimeChange={setEditTimeLogEndTime}
+        onDescriptionChange={setEditTimeLogDescription}
+        onSubmit={() => {
+          void saveEditedTimeLog();
+        }}
+      />
+
+      <ConfirmModal
+        open={cancelConfirmOpen}
+        title="Cancel active timer?"
+        message="This will discard the current timer and any unsaved tracked time."
+        confirmLabel="Cancel timer"
+        cancelLabel="Keep timer"
+        destructive
+        onClose={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          void cancelActiveTimer();
+        }}
+      />
+
+      <ConfirmModal
+        open={pendingDeleteTimeLogId !== null}
+        title="Delete time entry?"
+        message="This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        destructive
+        onClose={() => setPendingDeleteTimeLogId(null)}
+        onConfirm={() => {
+          void confirmDeleteTimeLog();
+        }}
+      />
 
       {isEditing ? (
         <EditTaskModal

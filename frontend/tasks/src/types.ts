@@ -1,7 +1,7 @@
 export type TaskStatus = 'OPEN' | 'IN_PROGRESS' | 'TO_REVIEW' | 'COMPLETED' | 'ON_HOLD';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type UserRole = 'ADMIN' | 'MANAGER' | 'MEMBER';
-export type TaskDetailTab = 'details' | 'comments' | 'activity';
+export type TaskDetailTab = 'details' | 'comments' | 'time-logs' | 'activity';
 
 export interface SafeUser {
   id: number;
@@ -115,6 +115,7 @@ export interface TimeEntry {
   isPaused: boolean;
   task: Pick<TaskRecord, 'id' | 'title' | 'clientId' | 'client'>;
   client: Client;
+  user?: SafeUser;
 }
 
 export interface StartTimerPayload {

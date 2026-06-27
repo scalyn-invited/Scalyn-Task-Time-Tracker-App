@@ -3,6 +3,7 @@ import { clearToken, getToken, request } from './lib/api';
 import { ActiveTimerCard } from './components/timer/ActiveTimerCard';
 import { ManualTimeEntryModal } from './modals/ManualTimeEntryModal';
 import { TimerSavedModal } from './components/timer/TimerSavedModal';
+import { ConfirmModal } from '../../shared/components/ConfirmModal';
 import { useTimerStore } from './store/timer.store';
 import { ClientOption, ManualEntryPayload, Profile, TaskOption, TimeEntry } from './types';
 
@@ -15,6 +16,7 @@ export function TimerPage() {
   const [description, setDescription] = useState('');
   const [manualOpen, setManualOpen] = useState(false);
   const [savedTimer, setSavedTimer] = useState<TimeEntry | null>(null);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
 
   const activeTimer = useTimerStore((state) => state.activeTimer);
@@ -191,17 +193,18 @@ export function TimerPage() {
     setSavedTimer(stoppedTimer);
   }
 
-  async function handleCancelTimer() {
+  function handleCancelTimer() {
     setPageError(null);
     clearError();
+    setCancelConfirmOpen(true);
+  }
 
-    const shouldCancel = window.confirm('Cancel the active timer? This will discard the current timer and any unsaved tracked time.');
-    if (!shouldCancel) {
-      return;
-    }
-
+  async function confirmCancelTimer() {
+    setPageError(null);
+    clearError();
     await cancelTimer();
     setDescription('');
+    setCancelConfirmOpen(false);
   }
 
   async function handleManualSubmit(payload: ManualEntryPayload) {
@@ -370,6 +373,19 @@ export function TimerPage() {
         onClose={() => setSavedTimer(null)}
         onViewTimesheet={() => {
           window.location.assign('/timesheets');
+        }}
+      />
+
+      <ConfirmModal
+        open={cancelConfirmOpen}
+        title="Cancel active timer?"
+        message="This will discard the current timer and any unsaved tracked time."
+        confirmLabel="Cancel timer"
+        cancelLabel="Keep timer"
+        destructive
+        onClose={() => setCancelConfirmOpen(false)}
+        onConfirm={() => {
+          void confirmCancelTimer();
         }}
       />
     </section>

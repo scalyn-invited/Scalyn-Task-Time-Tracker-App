@@ -259,6 +259,32 @@ export class TaskService {
     return this.findOwnedTaskOrFail(user.id, taskId);
   }
 
+  async listTimeLogs(user: SafeUser, taskId: number) {
+    await this.findOwnedTaskOrFail(user.id, taskId);
+
+    const where: PrismaTypes.TimeEntryWhereInput = {
+      taskId,
+    };
+
+    if (user.role === 'MEMBER') {
+      where.userId = user.id;
+    }
+
+    return this.prisma.timeEntry.findMany({
+      where,
+      include: {
+        task: {
+          include: {
+            client: true,
+          },
+        },
+        client: true,
+        user: true,
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+  }
+
   async listAllLabels(): Promise<TaskLabel[]> {
     return this.prisma.taskLabel.findMany({
       orderBy: { name: 'asc' },
