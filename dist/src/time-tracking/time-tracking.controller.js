@@ -39,6 +39,10 @@ let TimeTrackingController = class TimeTrackingController {
     async stop(req, dto) {
         return this.timeTrackingService.stopTimer(req.user.id, dto);
     }
+    async cancel(req) {
+        await this.timeTrackingService.cancelTimer(req.user.id);
+        return { success: true };
+    }
     async manual(req, dto) {
         return this.timeTrackingService.createManualEntry(req.user.id, dto);
     }
@@ -90,6 +94,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, stop_timer_dto_1.StopTimerDto]),
     __metadata("design:returntype", Promise)
 ], TimeTrackingController.prototype, "stop", null);
+__decorate([
+    (0, common_1.Delete)('active'),
+    (0, common_1.Header)('Cache-Control', 'no-store'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], TimeTrackingController.prototype, "cancel", null);
 __decorate([
     (0, common_1.Post)('manual'),
     (0, common_1.Header)('Cache-Control', 'no-store'),

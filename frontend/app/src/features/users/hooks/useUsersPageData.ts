@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { bulkUpdateUserStatus, createUser, deleteUser, fetchTeams, fetchUsers, updateUser } from '../../../lib/api';
+import { bulkUpdateUserStatus, createUser, deleteUser, fetchTeams, fetchUsers, updateUser } from '../../../lib/api/users.api';
 import type { SafeUser } from '../../../types';
 import { useToast } from '../../../../../shared/components/ToastProvider';
 

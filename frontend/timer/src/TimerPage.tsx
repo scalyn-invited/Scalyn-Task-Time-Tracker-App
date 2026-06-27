@@ -26,6 +26,7 @@ export function TimerPage() {
   const pauseTimer = useTimerStore((state) => state.pauseTimer);
   const resumeTimer = useTimerStore((state) => state.resumeTimer);
   const stopTimer = useTimerStore((state) => state.stopTimer);
+  const cancelTimer = useTimerStore((state) => state.cancelTimer);
   const submitManualEntry = useTimerStore((state) => state.submitManualEntry);
   const clearError = useTimerStore((state) => state.clearError);
 
@@ -190,6 +191,19 @@ export function TimerPage() {
     setSavedTimer(stoppedTimer);
   }
 
+  async function handleCancelTimer() {
+    setPageError(null);
+    clearError();
+
+    const shouldCancel = window.confirm('Cancel the active timer? This will discard the current timer and any unsaved tracked time.');
+    if (!shouldCancel) {
+      return;
+    }
+
+    await cancelTimer();
+    setDescription('');
+  }
+
   async function handleManualSubmit(payload: ManualEntryPayload) {
     setPageError(null);
     clearError();
@@ -221,6 +235,7 @@ export function TimerPage() {
             onPause={handlePauseTimer}
             onResume={handleResumeTimer}
             onStop={handleStopTimer}
+            onCancel={handleCancelTimer}
             loading={isSaving}
           />
 

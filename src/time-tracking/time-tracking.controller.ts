@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   HttpCode,
@@ -71,6 +72,16 @@ export class TimeTrackingController {
     @Body() dto: StopTimerDto,
   ): Promise<TimeEntryResponse> {
     return this.timeTrackingService.stopTimer(req.user.id, dto);
+  }
+
+  @Delete('active')
+  @Header('Cache-Control', 'no-store')
+  @HttpCode(HttpStatus.OK)
+  async cancel(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<{ success: true }> {
+    await this.timeTrackingService.cancelTimer(req.user.id);
+    return { success: true };
   }
 
   @Post('manual')

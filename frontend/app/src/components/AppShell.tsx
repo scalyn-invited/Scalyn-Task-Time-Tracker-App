@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import type { SafeUser } from '../types';
-import { clearToken } from '../lib/api';
+import { clearToken } from '../lib/api/core';
 import { navIcon } from '../lib/icons';
 import { visibleNavItems } from '../lib/nav';
 

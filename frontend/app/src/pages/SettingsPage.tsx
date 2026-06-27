@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createTaskLabel, deleteTaskLabel, fetchTaskLabels } from '../lib/api';
+import { createTaskLabel, deleteTaskLabel, fetchTaskLabels } from '../lib/api/tasks.api';
 import type { SafeUser, TaskLabel } from '../types';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { changePassword, updateProfile } from '../lib/api';
+import { changePassword, updateProfile } from '../lib/api/auth.api';
 import type { SafeUser } from '../types';
 
 const formatDate = (value?: string): string => {

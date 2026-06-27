@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  cancelTimer,
   createManualTimeEntry,
   createTaskComment,
   deleteTaskAttachment,
@@ -208,6 +209,12 @@ export function TaskDetailsPage() {
     setFeedback('');
   };
 
+  const cancelActiveTimer = async () => {
+    await cancelTimer();
+    setActiveTimer(null);
+    setFeedback('');
+  };
+
   const saveManualEntry = async (payload: ManualEntryPayload) => {
     const entry = await createManualTimeEntry(payload);
     const nextActiveTimer = await fetchActiveTimer().catch(() => activeTimer);
@@ -326,6 +333,7 @@ export function TaskDetailsPage() {
           onPauseTimer={pauseActiveTimer}
           onResumeTimer={resumeActiveTimer}
           onStopTimer={stopActiveTimer}
+          onCancelTimer={cancelActiveTimer}
           onCreateManualEntry={saveManualEntry}
         />
 

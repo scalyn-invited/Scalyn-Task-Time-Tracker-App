@@ -251,6 +251,12 @@ export function stopTimer(values: { description?: string } = {}): Promise<TimeEn
   });
 }
 
+export function cancelTimer(): Promise<{ success: true }> {
+  return request<{ success: true }>('/timer/active', {
+    method: 'DELETE',
+  });
+}
+
 export function createManualTimeEntry(values: ManualEntryPayload): Promise<TimeEntry> {
   return request<TimeEntry>('/timer/manual', {
     method: 'POST',

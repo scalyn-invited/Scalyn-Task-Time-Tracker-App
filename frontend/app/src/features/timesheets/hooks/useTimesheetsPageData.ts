@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { bulkDeleteTimeEntries, bulkUpdateTimeEntries, deleteTimeEntry, fetchClients, fetchTasks, fetchTimesheets, fetchUsers, updateTimeEntry } from '../../../lib/api';
+import { fetchClients } from '../../../lib/api/clients.api';
+import { fetchTasks } from '../../../lib/api/tasks.api';
+import { bulkDeleteTimeEntries, bulkUpdateTimeEntries, deleteTimeEntry, fetchTimesheets, updateTimeEntry } from '../../../lib/api/timesheets.api';
+import { fetchUsers } from '../../../lib/api/users.api';
 import type { ClientRecord, SafeUser, TimesheetEntry, TimesheetResponse } from '../../../types';
 import type { TaskRecord } from '../../../../../tasks/src/types';
 import { useToast } from '../../../../../shared/components/ToastProvider';

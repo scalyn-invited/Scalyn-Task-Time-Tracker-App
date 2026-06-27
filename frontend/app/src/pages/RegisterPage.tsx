@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../lib/api';
+import { register } from '../lib/api/auth.api';
 import type { SafeUser } from '../types';
 
 interface RegisterPageProps {

@@ -9,6 +9,7 @@ interface ActiveTimerCardProps {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
+  onCancel: () => void;
   loading?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function ActiveTimerCard({
   onPause,
   onResume,
   onStop,
+  onCancel,
   loading = false,
 }: ActiveTimerCardProps) {
   const timerStatus = entry?.status ?? 'completed';
@@ -95,6 +97,18 @@ export function ActiveTimerCard({
                   <span>{loading ? 'Resuming...' : 'Resume'}</span>
                 </button>
               ) : null}
+
+              <button
+                className="btn btn-secondary timer-cancel-button"
+                type="button"
+                onClick={onCancel}
+                disabled={loading || (!isRunning && !isPaused)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7 7 10 10m0-10L7 17" />
+                </svg>
+                <span>{loading ? 'Cancelling...' : 'Cancel'}</span>
+              </button>
 
               <button
                 className="btn btn-danger timer-stop-button"

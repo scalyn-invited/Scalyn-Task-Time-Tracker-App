@@ -8,7 +8,7 @@ import {
   fetchClient,
   fetchClients,
   updateClient,
-} from '../../../lib/api';
+} from '../../../lib/api/clients.api';
 import type { ClientRecord } from '../../../types';
 import { useToast } from '../../../../../shared/components/ToastProvider';
 

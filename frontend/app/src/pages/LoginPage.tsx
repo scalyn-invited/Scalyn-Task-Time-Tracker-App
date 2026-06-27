@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { login, setToken } from '../lib/api';
+import { login } from '../lib/api/auth.api';
+import { setToken } from '../lib/api/core';
 import type { SafeUser } from '../types';
 
 interface LoginPageProps {

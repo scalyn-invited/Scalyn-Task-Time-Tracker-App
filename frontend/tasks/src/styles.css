@@ -552,6 +552,7 @@
 .task-time-entry-card .task-timer-submit-start,
 .task-time-entry-card .task-timer-control-start,
 .task-time-entry-card .task-timer-control-pause,
+.task-time-entry-card .task-timer-control-cancel,
 .task-time-entry-card .task-timer-control-stop {
   box-shadow: 0 10px 24px rgba(35, 57, 83, 0.08);
 }

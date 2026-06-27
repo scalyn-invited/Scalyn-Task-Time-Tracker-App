@@ -195,6 +195,26 @@ export class TimeTrackingService {
     );
   }
 
+  async cancelTimer(userId: number): Promise<void> {
+    await this.prisma.$transaction(
+      async (tx) => {
+        const activeEntry = await this.findActiveTimerOrFail(tx, userId, [
+          TimeEntryStatus.RUNNING,
+          TimeEntryStatus.PAUSED,
+        ]);
+
+        await tx.timeEntry.delete({
+          where: {
+            id: activeEntry.id,
+          },
+        });
+      },
+      {
+        isolationLevel: PrismaValue.TransactionIsolationLevel.Serializable,
+      },
+    );
+  }
+
   async createManualEntry(userId: number, dto: ManualEntryDto): Promise<TimeEntryResponse> {
     const description = this.normalizeDescription(dto.description);
     const endedAt = new Date();

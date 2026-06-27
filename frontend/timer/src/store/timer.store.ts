@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { ApiError, createManualTimeEntry, fetchActiveTimer, pauseTimer as pauseTimerRequest, resumeTimer as resumeTimerRequest, startTimer as startTimerRequest, stopTimer as stopTimerRequest } from '../lib/api';
+import { ApiError, cancelTimer as cancelTimerRequest, createManualTimeEntry, fetchActiveTimer, pauseTimer as pauseTimerRequest, resumeTimer as resumeTimerRequest, startTimer as startTimerRequest, stopTimer as stopTimerRequest } from '../lib/api';
 import {
   ManualEntryPayload,
   StartTimerPayload,
@@ -23,6 +23,7 @@ interface TimerState {
   pauseTimer: () => Promise<TimeEntry>;
   resumeTimer: () => Promise<TimeEntry>;
   stopTimer: (payload?: StopTimerPayload) => Promise<TimeEntry>;
+  cancelTimer: () => Promise<void>;
   submitManualEntry: (payload: ManualEntryPayload) => Promise<TimeEntry>;
 }
 
@@ -121,6 +122,20 @@ export const useTimerStore = create<TimerState>()(
           const stoppedTimer = await stopTimerRequest(payload);
           set(syncTimerEntry(null));
           return stoppedTimer;
+        } catch (error) {
+          const message = error instanceof ApiError ? error.message : error instanceof Error ? error.message : 'Request failed';
+          set({ error: message });
+          throw error;
+        } finally {
+          set({ isSaving: false });
+        }
+      },
+      cancelTimer: async () => {
+        set({ isSaving: true, error: null });
+
+        try {
+          await cancelTimerRequest();
+          set(syncTimerEntry(null));
         } catch (error) {
           const message = error instanceof ApiError ? error.message : error instanceof Error ? error.message : 'Request failed';
           set({ error: message });

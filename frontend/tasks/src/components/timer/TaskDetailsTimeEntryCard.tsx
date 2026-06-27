@@ -9,6 +9,7 @@ interface TaskDetailsTimeEntryCardProps {
   onPauseTimer: () => Promise<void>;
   onResumeTimer: () => Promise<void>;
   onStopTimer: (payload?: { description?: string }) => Promise<void>;
+  onCancelTimer: () => Promise<void>;
   onCreateManualEntry: (payload: ManualEntryPayload) => Promise<void>;
 }
 
@@ -39,6 +40,7 @@ export function TaskDetailsTimeEntryCard({
   onPauseTimer,
   onResumeTimer,
   onStopTimer,
+  onCancelTimer,
   onCreateManualEntry,
 }: TaskDetailsTimeEntryCardProps) {
   const [description, setDescription] = useState('');
@@ -125,6 +127,25 @@ export function TaskDetailsTimeEntryCard({
       });
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to stop timer');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsSaving(true);
+    setError('');
+
+    try {
+      const shouldCancel = window.confirm('Cancel the active timer? This will discard the current timer and any unsaved tracked time.');
+      if (!shouldCancel) {
+        return;
+      }
+
+      await onCancelTimer();
+      setDescription('');
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to cancel timer');
     } finally {
       setIsSaving(false);
     }
@@ -239,6 +260,14 @@ export function TaskDetailsTimeEntryCard({
                 {isSaving ? 'Pausing...' : 'Pause'}
               </button>
             )}
+            <button
+              type="button"
+              className="btn btn-secondary task-timer-control task-timer-control-cancel"
+              disabled={isSaving}
+              onClick={() => void handleCancel()}
+            >
+              {isSaving ? 'Cancelling...' : 'Cancel'}
+            </button>
             <button
               type="button"
               className="btn btn-danger task-timer-control task-timer-control-stop"
