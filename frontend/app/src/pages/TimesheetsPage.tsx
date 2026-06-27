@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { bulkDeleteTimeEntries, bulkUpdateTimeEntries, deleteTimeEntry, fetchClients, fetchTasks, fetchTimesheets, fetchUsers, updateTimeEntry } from '../lib/api';
-import type { ClientRecord, SafeUser, TimesheetEntry } from '../types';
-import type { TaskRecord } from '../../../tasks/src/types';
-import type { TimesheetResponse } from '../types';
+import { FormEvent } from 'react';
 import { ConfirmModal } from '../../../shared/components/ConfirmModal';
-import { DataTable } from '../../../shared/components/DataTable';
 import { BulkActionToolbar } from '../../../shared/components/BulkActionToolbar';
-import { useToast } from '../../../shared/components/ToastProvider';
+import { TimesheetsSummaryCards } from '../features/timesheets/components/TimesheetsSummaryCards';
+import { TimesheetsFilters } from '../features/timesheets/components/TimesheetsFilters';
+import { TimesheetsTable } from '../features/timesheets/components/TimesheetsTable';
+import { useTimesheetsPageData } from '../features/timesheets/hooks/useTimesheetsPageData';
 
 const formatDuration = (seconds: number): string => {
   const total = Math.max(0, Number(seconds || 0));
@@ -17,148 +15,102 @@ const formatDuration = (seconds: number): string => {
 };
 
 export function TimesheetsPage() {
-  const { showToast } = useToast();
-  const [users, setUsers] = useState<SafeUser[]>([]);
-  const [clients, setClients] = useState<ClientRecord[]>([]);
-  const [tasks, setTasks] = useState<TaskRecord[]>([]);
-  const [response, setResponse] = useState<TimesheetResponse | null>(null);
-  const [view, setView] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
-  const [userId, setUserId] = useState('');
-  const [clientId, setClientId] = useState('');
-  const [taskId, setTaskId] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-  const [editingEntry, setEditingEntry] = useState<TimesheetEntry | null>(null);
-  const [editClientId, setEditClientId] = useState('');
-  const [editTaskId, setEditTaskId] = useState('');
-  const [editStartTime, setEditStartTime] = useState('');
-  const [editEndTime, setEditEndTime] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [selectedEntryIds, setSelectedEntryIds] = useState<number[]>([]);
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
-  const [bulkClientId, setBulkClientId] = useState('');
-  const [bulkTaskId, setBulkTaskId] = useState('');
+  const {
+    users,
+    clients,
+    response,
+    view,
+    setView,
+    userId,
+    setUserId,
+    clientId,
+    setClientId,
+    taskId,
+    setTaskId,
+    from,
+    setFrom,
+    to,
+    setTo,
+    pendingDeleteId,
+    setPendingDeleteId,
+    editingEntry,
+    setEditingEntry,
+    editClientId,
+    setEditClientId,
+    editTaskId,
+    setEditTaskId,
+    editStartTime,
+    setEditStartTime,
+    editEndTime,
+    setEditEndTime,
+    editDescription,
+    setEditDescription,
+    selectedEntryIds,
+    setSelectedEntryIds,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
+    bulkUpdateOpen,
+    setBulkUpdateOpen,
+    bulkClientId,
+    setBulkClientId,
+    bulkTaskId,
+    setBulkTaskId,
+    visibleTasks,
+    editVisibleTasks,
+    bulkVisibleTasks,
+    tableEntries,
+    saveBulkUpdate,
+    confirmBulkDelete,
+    saveEditedEntry,
+    confirmDeleteEntry,
+  } = useTimesheetsPageData();
 
-  const visibleTasks = useMemo(() => {
-    if (!clientId) return tasks;
-    return tasks.filter((task) => String(task.clientId) === clientId);
-  }, [clientId, tasks]);
+  const userScope = userId ? users.find((user) => String(user.id) === userId)?.name ?? 'Selected user' : 'All users';
+  const clientScope = clientId ? clients.find((client) => String(client.id) === clientId)?.name ?? 'Selected client' : 'All clients';
 
-  const editVisibleTasks = useMemo(() => {
-    if (!editClientId) return tasks;
-    return tasks.filter((task) => String(task.clientId) === editClientId);
-  }, [editClientId, tasks]);
+  function handleBulkUpdateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void saveBulkUpdate();
+  }
 
-  const bulkVisibleTasks = useMemo(() => {
-    if (!bulkClientId) return tasks;
-    return tasks.filter((task) => String(task.clientId) === bulkClientId);
-  }, [bulkClientId, tasks]);
-
-  const tableEntries = useMemo(
-    () => [...(response?.groups ?? []).flatMap((group) => group.entries)].sort(
-      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
-    ),
-    [response],
-  );
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [userRows, clientRows, taskRows, timesheetRows] = await Promise.all([
-        fetchUsers(),
-        fetchClients(),
-        fetchTasks(),
-        fetchTimesheets({
-          view,
-          userId: userId ? Number(userId) : undefined,
-          clientId: clientId ? Number(clientId) : undefined,
-          taskId: taskId ? Number(taskId) : undefined,
-          from: from || undefined,
-          to: to || undefined,
-        }),
-      ]);
-
-      setUsers(userRows);
-      setClients(clientRows);
-      setTasks(taskRows);
-      setResponse(timesheetRows);
-      setSelectedEntryIds([]);
-      setError('');
-    } catch (loadError) {
-      const message = loadError instanceof Error ? loadError.message : 'Unable to load timesheets';
-      setError(message);
-      showToast(message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadData();
-  }, [view, userId, clientId, taskId, from, to]);
-
-  useEffect(() => {
-    if (!editingEntry) {
-      setEditClientId('');
-      setEditTaskId('');
-      setEditStartTime('');
-      setEditEndTime('');
-      setEditDescription('');
-      return;
-    }
-
-    setEditClientId(String(editingEntry.clientId));
-    setEditTaskId(String(editingEntry.taskId));
-    setEditStartTime(editingEntry.startTime.slice(0, 16));
-    setEditEndTime(editingEntry.endTime ? editingEntry.endTime.slice(0, 16) : '');
-    setEditDescription(editingEntry.description ?? '');
-  }, [editingEntry]);
+  function handleEditSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void saveEditedEntry();
+  }
 
   return (
-    <section className="route-main timesheet-page">
+    <section className="route-main timesheets-page">
       <header className="topbar dashboard-topbar">
         <div>
           <h1>Timesheets</h1>
-          <p className="timesheet-subtitle">{response?.range.label ?? 'Loading range'}</p>
-        </div>
-        <div className="topbar-actions">
-          <button className="action-button" type="button" onClick={() => void loadData()}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" /><path d="M20 4v6h-6" /></svg>
-            <span>Refresh</span>
-          </button>
-          <button className="team-switcher" type="button" onClick={() => { setUserId(''); setClientId(''); setTaskId(''); setFrom(''); setTo(''); setView('monthly'); }}>
-            <span>Reset filters</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-          </button>
+          <p className="timesheets-subtitle">Review tracked time, filter by user/client/task, and edit or remove entries.</p>
         </div>
       </header>
 
-      <section className="timesheet-summary-grid">
-        <article className="stat-card stat-card-blue"><div className="stat-card-head">Total Duration</div><div className="stat-card-body"><strong>{formatDuration(response?.totals.durationSeconds ?? 0)}</strong><span>Tracked time</span></div></article>
-        <article className="stat-card stat-card-green"><div className="stat-card-head">Time Entries</div><div className="stat-card-body"><strong>{response?.totals.entryCount ?? 0}</strong><span>Loaded rows</span></div></article>
-        <article className="stat-card stat-card-purple"><div className="stat-card-head">Scope</div><div className="stat-card-body"><strong>{userId ? users.find((user) => String(user.id) === userId)?.name ?? 'Selected user' : 'All users'}</strong><span>{clientId ? clients.find((client) => String(client.id) === clientId)?.name ?? 'Selected client' : 'All clients'}</span></div></article>
-      </section>
+      <TimesheetsSummaryCards
+        totalDuration={formatDuration(response?.totals.durationSeconds ?? 0)}
+        entryCount={response?.totals.entryCount ?? 0}
+        userScope={userScope}
+        clientScope={clientScope}
+      />
 
-      <section className="card-panel timesheet-filter-panel">
-        <div className="timesheet-view-toggle" role="tablist" aria-label="Timesheet view">
-          {(['daily', 'weekly', 'monthly'] as const).map((candidate) => (
-            <button key={candidate} type="button" className={`timesheet-view-button${view === candidate ? ' is-active' : ''}`} onClick={() => setView(candidate)}>{candidate[0].toUpperCase() + candidate.slice(1)}</button>
-          ))}
-        </div>
-
-        <div className="timesheet-filter-grid">
-          <label className="field"><span>User</span><select value={userId} onChange={(event) => setUserId(event.target.value)}><option value="">All users</option>{users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
-          <label className="field"><span>Client</span><select value={clientId} onChange={(event) => setClientId(event.target.value)}><option value="">All clients</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label>
-          <label className="field"><span>Task</span><select value={taskId} onChange={(event) => setTaskId(event.target.value)}><option value="">All tasks</option>{visibleTasks.map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}</select></label>
-          <label className="field"><span>From</span><input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
-          <label className="field"><span>To</span><input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
-        </div>
-      </section>
+      <TimesheetsFilters
+        view={view}
+        onViewChange={setView}
+        userId={userId}
+        onUserIdChange={setUserId}
+        clientId={clientId}
+        onClientIdChange={setClientId}
+        taskId={taskId}
+        onTaskIdChange={setTaskId}
+        from={from}
+        onFromChange={setFrom}
+        to={to}
+        onToChange={setTo}
+        users={users}
+        clients={clients}
+        visibleTasks={visibleTasks}
+      />
 
       <BulkActionToolbar
         count={selectedEntryIds.length}
@@ -169,56 +121,13 @@ export function TimesheetsPage() {
         ]}
       />
 
-      <section className="card-panel timesheet-table-panel">
-        <div className="panel-head"><div><h2>Time entries</h2></div></div>
-        <DataTable
-          data={tableEntries}
-          className="timesheet-table"
-          emptyMessage="No time entries found."
-          searchPlaceholder="Search time entries"
-          order={[[1, 'desc']]}
-          selectable
-          getRowId={(entry) => entry.id}
-          selectedRowIds={selectedEntryIds}
-          onSelectionChange={setSelectedEntryIds}
-          columns={[
-            {
-              key: 'createdSort',
-              title: 'Created sort',
-              display: (entry) => String(new Date(entry.createdAt).getTime()),
-              sortValue: (entry) => new Date(entry.createdAt).getTime(),
-              searchable: false,
-              visible: false,
-            },
-            {
-              key: 'date',
-              title: 'Date',
-              display: (entry) => new Date(entry.startTime).toLocaleDateString(),
-              sortValue: (entry) => new Date(entry.createdAt).getTime(),
-              searchValue: (entry) => `${new Date(entry.startTime).toLocaleDateString()} ${new Date(entry.startTime).toLocaleString()}`,
-            },
-            { key: 'task', title: 'Task', display: (entry) => entry.task.title, searchValue: (entry) => entry.task.title },
-            { key: 'client', title: 'Client', display: (entry) => entry.client.name, searchValue: (entry) => entry.client.name },
-            { key: 'duration', title: 'Duration', display: (entry) => formatDuration(entry.durationSeconds), sortValue: (entry) => entry.durationSeconds },
-            { key: 'description', title: 'Description', display: (entry) => entry.description || 'No description', searchValue: (entry) => entry.description || 'No description' },
-          ]}
-          actions={[
-            {
-              action: 'edit',
-              label: (entry) => `Edit time entry ${entry.id}`,
-              title: 'Edit',
-              onClick: (entry) => setEditingEntry(entry),
-            },
-            {
-              action: 'delete',
-              label: (entry) => `Delete time entry ${entry.id}`,
-              title: 'Delete',
-              variant: 'danger',
-              onClick: (entry) => setPendingDeleteId(entry.id),
-            },
-          ]}
-        />
-      </section>
+      <TimesheetsTable
+        entries={tableEntries}
+        selectedEntryIds={selectedEntryIds}
+        onSelectionChange={setSelectedEntryIds}
+        onEdit={setEditingEntry}
+        onDelete={(entry) => setPendingDeleteId(entry.id)}
+      />
 
       {bulkUpdateOpen ? (
         <div className="client-modal" onClick={() => setBulkUpdateOpen(false)}>
@@ -234,35 +143,7 @@ export function TimesheetsPage() {
               </header>
               <div className="client-modal-body">
                 <section className="client-modal-panel">
-                  <form className="client-form" onSubmit={(event) => {
-                    event.preventDefault();
-                    void (async () => {
-                      const changes: { clientId?: number; taskId?: number } = {};
-                      if (bulkClientId) changes.clientId = Number(bulkClientId);
-                      if (bulkTaskId) changes.taskId = Number(bulkTaskId);
-                      if (Object.keys(changes).length === 0) {
-                        setError('Select at least one field to update.');
-                        setFeedback('');
-                        showToast('Select at least one field to update.', 'warning');
-                        return;
-                      }
-                      try {
-                        await bulkUpdateTimeEntries({ timeEntryIds: selectedEntryIds, changes });
-                        setBulkUpdateOpen(false);
-                        setBulkClientId('');
-                        setBulkTaskId('');
-                        setFeedback(`${selectedEntryIds.length} time entries updated successfully.`);
-                        setError('');
-                        showToast(`${selectedEntryIds.length} time entries updated successfully.`, 'success');
-                        await loadData();
-                      } catch (updateError) {
-                        const message = updateError instanceof Error ? updateError.message : 'Unable to bulk update time entries';
-                        setError(message);
-                        setFeedback('');
-                        showToast(message, 'error');
-                      }
-                    })();
-                  }}>
+                  <form className="client-form" onSubmit={handleBulkUpdateSubmit}>
                     <div className="field"><label htmlFor="bulk-timesheet-client">Client</label><select id="bulk-timesheet-client" value={bulkClientId} onChange={(event) => { setBulkClientId(event.target.value); if (!bulkVisibleTasks.some((task) => String(task.id) === bulkTaskId)) { setBulkTaskId(''); } }}><option value="">No change</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></div>
                     <div className="field"><label htmlFor="bulk-timesheet-task">Task</label><select id="bulk-timesheet-task" value={bulkTaskId} onChange={(event) => setBulkTaskId(event.target.value)}><option value="">No change</option>{bulkVisibleTasks.map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}</select></div>
                     <div className="form-actions"><button className="btn btn-primary" type="submit">Apply changes</button><button className="btn btn-secondary" type="button" onClick={() => setBulkUpdateOpen(false)}>Cancel</button></div>
@@ -283,21 +164,7 @@ export function TimesheetsPage() {
         destructive
         onClose={() => setBulkDeleteOpen(false)}
         onConfirm={() => {
-          void (async () => {
-            try {
-              await bulkDeleteTimeEntries(selectedEntryIds);
-              setBulkDeleteOpen(false);
-              setFeedback(`${selectedEntryIds.length} time entries deleted successfully.`);
-              setError('');
-              showToast(`${selectedEntryIds.length} time entries deleted successfully.`, 'success');
-              await loadData();
-            } catch (deleteError) {
-              const message = deleteError instanceof Error ? deleteError.message : 'Unable to bulk delete time entries';
-              setError(message);
-              setFeedback('');
-              showToast(message, 'error');
-            }
-          })();
+          void confirmBulkDelete();
         }}
       />
 
@@ -315,33 +182,7 @@ export function TimesheetsPage() {
               </header>
               <div className="client-modal-body">
                 <section className="client-modal-panel">
-                  <form
-                    className="client-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void (async () => {
-                        try {
-                          await updateTimeEntry(editingEntry.id, {
-                            clientId: editClientId ? Number(editClientId) : undefined,
-                            taskId: editTaskId ? Number(editTaskId) : undefined,
-                            startTime: editStartTime ? new Date(editStartTime).toISOString() : undefined,
-                            endTime: editEndTime ? new Date(editEndTime).toISOString() : undefined,
-                            description: editDescription,
-                          });
-                          setEditingEntry(null);
-                          setFeedback('Time entry updated successfully.');
-                          setError('');
-                          showToast('Time entry updated successfully.', 'success');
-                          await loadData();
-                        } catch (updateError) {
-                          const message = updateError instanceof Error ? updateError.message : 'Unable to update time entry';
-                          setError(message);
-                          setFeedback('');
-                          showToast(message, 'error');
-                        }
-                      })();
-                    }}
-                  >
+                  <form className="client-form" onSubmit={handleEditSubmit}>
                     <div className="field"><label htmlFor="timesheet-edit-client">Client</label><select id="timesheet-edit-client" value={editClientId} onChange={(event) => { setEditClientId(event.target.value); if (!editVisibleTasks.some((task) => String(task.id) === editTaskId)) { setEditTaskId(''); } }} required><option value="">Select client</option>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></div>
                     <div className="field"><label htmlFor="timesheet-edit-task">Task</label><select id="timesheet-edit-task" value={editTaskId} onChange={(event) => setEditTaskId(event.target.value)} required><option value="">Select task</option>{editVisibleTasks.map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}</select></div>
                     <div className="field"><label htmlFor="timesheet-edit-start">Start time</label><input id="timesheet-edit-start" type="datetime-local" value={editStartTime} onChange={(event) => setEditStartTime(event.target.value)} required /></div>
@@ -365,22 +206,7 @@ export function TimesheetsPage() {
         destructive
         onClose={() => setPendingDeleteId(null)}
         onConfirm={() => {
-          if (pendingDeleteId === null) return;
-          void (async () => {
-            try {
-              await deleteTimeEntry(pendingDeleteId);
-              setPendingDeleteId(null);
-              setFeedback('Time entry deleted successfully.');
-              setError('');
-              showToast('Time entry deleted successfully.', 'success');
-              await loadData();
-            } catch (deleteError) {
-              const message = deleteError instanceof Error ? deleteError.message : 'Unable to delete time entry';
-              setError(message);
-              setFeedback('');
-              showToast(message, 'error');
-            }
-          })();
+          void confirmDeleteEntry();
         }}
       />
     </section>
