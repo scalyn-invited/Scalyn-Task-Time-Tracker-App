@@ -549,6 +549,45 @@
   width: 100%;
 }
 
+.task-time-entry-card .task-timer-submit-start,
+.task-time-entry-card .task-timer-control-start {
+  color: #ffffff;
+  border-color: rgba(31, 156, 91, 0.22);
+  background: linear-gradient(135deg, #2fbe72 0%, #1f9c5b 100%);
+  box-shadow: 0 16px 30px rgba(31, 156, 91, 0.24);
+}
+
+.task-time-entry-card .task-timer-submit-start:hover:not(:disabled),
+.task-time-entry-card .task-timer-control-start:hover:not(:disabled) {
+  background: linear-gradient(135deg, #29b167 0%, #18874d 100%);
+  box-shadow: 0 18px 34px rgba(31, 156, 91, 0.3);
+}
+
+.task-time-entry-card .task-timer-control-pause {
+  color: #8c5100;
+  border-color: rgba(214, 144, 18, 0.22);
+  background: linear-gradient(135deg, rgba(255, 184, 77, 0.2), rgba(255, 184, 77, 0.08));
+  box-shadow: 0 12px 24px rgba(214, 144, 18, 0.12);
+}
+
+.task-time-entry-card .task-timer-control-pause:hover:not(:disabled) {
+  color: #744200;
+  border-color: rgba(214, 144, 18, 0.32);
+  background: linear-gradient(135deg, rgba(255, 184, 77, 0.28), rgba(255, 184, 77, 0.12));
+}
+
+.task-time-entry-card .task-timer-control-stop {
+  color: #ffffff;
+  border-color: rgba(226, 70, 70, 0.22);
+  background: linear-gradient(135deg, #ff7a7a 0%, #e24646 100%);
+  box-shadow: 0 16px 30px rgba(226, 70, 70, 0.2);
+}
+
+.task-time-entry-card .task-timer-control-stop:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f86b6b 0%, #cc3434 100%);
+  box-shadow: 0 18px 34px rgba(226, 70, 70, 0.28);
+}
+
 .timer-saved-dialog {
   position: relative;
   z-index: 70;

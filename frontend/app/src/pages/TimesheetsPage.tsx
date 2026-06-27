@@ -57,6 +57,13 @@ export function TimesheetsPage() {
     return tasks.filter((task) => String(task.clientId) === bulkClientId);
   }, [bulkClientId, tasks]);
 
+  const tableEntries = useMemo(
+    () => [...(response?.groups ?? []).flatMap((group) => group.entries)].sort(
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    ),
+    [response],
+  );
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -164,17 +171,28 @@ export function TimesheetsPage() {
       <section className="card-panel timesheet-table-panel">
         <div className="panel-head"><div><h2>Time entries</h2></div></div>
         <DataTable
-          data={(response?.groups ?? []).flatMap((group) => group.entries)}
+          data={tableEntries}
           className="timesheet-table"
           emptyMessage="No time entries found."
           searchPlaceholder="Search time entries"
-          order={[[0, 'desc']]}
+          order={[[1, 'desc']]}
           selectable
           getRowId={(entry) => entry.id}
           selectedRowIds={selectedEntryIds}
           onSelectionChange={setSelectedEntryIds}
           columns={[
-            { title: 'Date', render: (entry) => new Date(entry.startTime).toLocaleDateString() },
+            {
+              title: 'Created sort',
+              render: (entry) => String(new Date(entry.createdAt).getTime()),
+              sortValue: (entry) => new Date(entry.createdAt).getTime(),
+              searchable: false,
+              visible: false,
+            },
+            {
+              title: 'Date',
+              render: (entry) => new Date(entry.startTime).toLocaleDateString(),
+              sortValue: (entry) => new Date(entry.createdAt).getTime(),
+            },
             { title: 'Task', render: (entry) => entry.task.title },
             { title: 'Client', render: (entry) => entry.client.name },
             { title: 'Duration', render: (entry) => formatDuration(entry.durationSeconds) },

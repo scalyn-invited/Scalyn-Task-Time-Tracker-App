@@ -223,7 +223,7 @@ export function TaskDetailsTimeEntryCard({
             {activeTimer?.status === 'paused' ? (
               <button
                 type="button"
-                className="btn btn-primary task-timer-control"
+                className="btn btn-primary task-timer-control task-timer-control-start"
                 disabled={isSaving}
                 onClick={() => void handleResume()}
               >
@@ -232,7 +232,7 @@ export function TaskDetailsTimeEntryCard({
             ) : (
               <button
                 type="button"
-                className="btn btn-secondary task-timer-control"
+                className="btn btn-secondary task-timer-control task-timer-control-pause"
                 disabled={isSaving}
                 onClick={() => void handlePause()}
               >
@@ -241,7 +241,7 @@ export function TaskDetailsTimeEntryCard({
             )}
             <button
               type="button"
-              className="btn btn-secondary task-timer-control"
+              className="btn btn-secondary task-timer-control task-timer-control-stop"
               disabled={isSaving}
               onClick={() => void handleStop()}
             >
@@ -251,7 +251,7 @@ export function TaskDetailsTimeEntryCard({
         ) : (
           <button
             type="button"
-            className="btn btn-primary task-timer-submit"
+            className="btn btn-primary task-timer-submit task-timer-submit-start"
             disabled={isSaving || !canStartTimer}
             onClick={() => void handleStart()}
           >

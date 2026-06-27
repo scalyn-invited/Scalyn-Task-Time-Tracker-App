@@ -170,19 +170,19 @@ body.modal-open {
 }
 
 .timer-start-button {
-  background: linear-gradient(135deg, #48a0ff 0%, #2b6bff 100%);
+  background: linear-gradient(135deg, #2fbe72 0%, #1f9c5b 100%);
   color: #ffffff;
-  border: 1px solid rgba(43, 107, 255, 0.18);
-  box-shadow: 0 16px 30px rgba(43, 107, 255, 0.22);
+  border: 1px solid rgba(31, 156, 91, 0.22);
+  box-shadow: 0 16px 30px rgba(31, 156, 91, 0.24);
 }
 
 .timer-start-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #3f94f5 0%, #235ee3 100%);
-  box-shadow: 0 18px 34px rgba(43, 107, 255, 0.28);
+  background: linear-gradient(135deg, #29b167 0%, #18874d 100%);
+  box-shadow: 0 18px 34px rgba(31, 156, 91, 0.3);
 }
 
 .timer-start-button:disabled {
-  background: linear-gradient(135deg, rgba(72, 160, 255, 0.55) 0%, rgba(43, 107, 255, 0.55) 100%);
+  background: linear-gradient(135deg, rgba(47, 190, 114, 0.55) 0%, rgba(31, 156, 91, 0.55) 100%);
   box-shadow: none;
 }
 
@@ -227,7 +227,33 @@ body.modal-open {
 }
 
 .timer-action-button-secondary {
-  background: linear-gradient(135deg, rgba(47, 124, 246, 0.08), rgba(47, 124, 246, 0.03));
+  background: linear-gradient(135deg, rgba(255, 184, 77, 0.2), rgba(255, 184, 77, 0.08));
+  border-color: rgba(214, 144, 18, 0.22);
+  color: #a86206;
+  box-shadow: 0 12px 24px rgba(214, 144, 18, 0.12);
+}
+
+.timer-action-button-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 184, 77, 0.28), rgba(255, 184, 77, 0.12));
+  border-color: rgba(214, 144, 18, 0.32);
+  color: #8c5100;
+}
+
+.timer-stop-button {
+  background: linear-gradient(135deg, #ff7a7a 0%, #e24646 100%);
+  color: #ffffff;
+  border: 1px solid rgba(226, 70, 70, 0.22);
+  box-shadow: 0 16px 30px rgba(226, 70, 70, 0.2);
+}
+
+.timer-stop-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f86b6b 0%, #cc3434 100%);
+  box-shadow: 0 18px 34px rgba(226, 70, 70, 0.28);
+}
+
+.timer-stop-button:disabled {
+  background: linear-gradient(135deg, rgba(255, 122, 122, 0.55) 0%, rgba(226, 70, 70, 0.55) 100%);
+  box-shadow: none;
 }
 
 .timer-side-hint {

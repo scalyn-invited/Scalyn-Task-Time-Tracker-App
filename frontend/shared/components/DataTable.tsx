@@ -14,9 +14,12 @@ export interface DataTableColumn<T> {
   title: string;
   value?: keyof T | ((row: T) => unknown);
   render?: (row: T) => string;
+  sortValue?: (row: T) => string | number;
+  searchValue?: (row: T) => string;
   orderable?: boolean;
   searchable?: boolean;
   className?: string;
+  visible?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -85,8 +88,17 @@ export function DataTable<T>({
       title: column.title,
       orderable: column.orderable ?? true,
       searchable: column.searchable ?? true,
+      visible: column.visible ?? true,
       className: column.className,
-      render: (_value: unknown, _type: unknown, row: T) => {
+      render: (_value: unknown, type: string, row: T) => {
+        if (type === 'sort' && column.sortValue) {
+          return column.sortValue(row);
+        }
+
+        if (type === 'filter' && column.searchValue) {
+          return column.searchValue(row);
+        }
+
         const value = resolveColumnValue(row, column);
         return typeof value === 'string' ? value : escapeHtml(value);
       },
